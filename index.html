@@ -6,25 +6,29 @@
 <title>Palace</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Playfair+Display:wght@700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Space+Mono:wght@400;700&display=swap');
 
   :root {
-    --felt: #1a3a2a;
-    --felt-light: #234d39;
-    --felt-dark: #0f2318;
-    --ivory: #f5f0e8;
-    --ivory-shadow: #d4cdb8;
-    --amber: #e8a020;
-    --amber-dark: #c07810;
+    --felt: #1c3d2c;
+    --felt-light: #254f39;
+    --felt-dark: #0e2118;
+    --felt-mid: #163022;
+    --ivory: #f2ede0;
+    --ivory-dim: #c8c1ad;
+    --ivory-faint: #9a9285;
+    --gold: #d4a832;
+    --gold-light: #e8c560;
+    --gold-dark: #a07820;
     --red-suit: #c0392b;
     --black-suit: #1a1a1a;
-    --highlight: #4ecf80;
-    --danger: #e84040;
+    --green-good: #3ec878;
+    --red-bad: #e84040;
+    --blue-info: #4a9edd;
     --mono: 'Space Mono', monospace;
-    --serif: 'Playfair Display', serif;
+    --serif: 'Cinzel', serif;
   }
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     background: var(--felt-dark);
@@ -32,65 +36,82 @@
     color: var(--ivory);
     min-height: 100vh;
     overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(30,80,50,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(20,60,40,0.2) 0%, transparent 50%);
   }
 
-  /* ── LOBBY ── */
+  /* ── LOBBY ─────────────────────────────── */
   #lobby {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    gap: 28px;
+    gap: 32px;
     padding: 32px;
+  }
+
+  .logo-wrap {
+    text-align: center;
+    position: relative;
   }
 
   .lobby-title {
     font-family: var(--serif);
-    font-size: clamp(52px, 10vw, 96px);
-    color: var(--ivory);
-    letter-spacing: 0.04em;
-    text-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 60px rgba(232,160,32,0.15);
-    position: relative;
+    font-size: clamp(64px, 12vw, 112px);
+    color: var(--gold);
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-shadow:
+      0 0 40px rgba(212,168,50,0.35),
+      0 2px 0 rgba(0,0,0,0.5);
   }
 
-  .lobby-title::after {
-    content: '♦';
-    color: var(--amber);
-    font-size: 0.45em;
-    position: absolute;
-    top: -8px;
-    right: -28px;
-    text-shadow: 0 0 20px rgba(232,160,32,0.6);
+  .lobby-suits {
+    display: flex;
+    gap: 18px;
+    justify-content: center;
+    margin-top: 10px;
+    font-size: 22px;
+    letter-spacing: 0.1em;
   }
+
+  .lobby-suits span:nth-child(1),
+  .lobby-suits span:nth-child(4) { color: var(--ivory-faint); }
+  .lobby-suits span:nth-child(2),
+  .lobby-suits span:nth-child(3) { color: var(--red-suit); opacity: 0.7; }
 
   .lobby-subtitle {
+    font-family: var(--serif);
     font-size: 11px;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.35em;
     text-transform: uppercase;
-    color: var(--ivory-shadow);
-    margin-top: -20px;
+    color: var(--ivory-faint);
+    margin-top: 6px;
   }
 
   .lobby-card {
-    background: var(--felt);
-    border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 16px;
-    padding: 32px 40px;
+    background: var(--felt-mid);
+    border: 1px solid rgba(212,168,50,0.18);
+    border-radius: 20px;
+    padding: 36px 44px;
     width: 100%;
-    max-width: 440px;
+    max-width: 460px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
   }
 
   .lobby-card h2 {
     font-family: var(--serif);
-    font-size: 22px;
-    font-weight: 700;
-    color: var(--amber);
-    border-bottom: 1px solid rgba(232,160,32,0.2);
-    padding-bottom: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--gold);
+    letter-spacing: 0.1em;
+    border-bottom: 1px solid rgba(212,168,50,0.15);
+    padding-bottom: 14px;
   }
 
   .input-row {
@@ -101,129 +122,143 @@
 
   .input-row label {
     font-size: 10px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--ivory-shadow);
+    color: var(--ivory-faint);
   }
 
   .input-row input {
-    background: var(--felt-dark);
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 8px;
-    padding: 12px 16px;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 13px 18px;
     color: var(--ivory);
     font-family: var(--mono);
     font-size: 14px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
 
   .input-row input:focus {
-    border-color: var(--amber);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(212,168,50,0.12);
   }
+
+  .input-row input::placeholder { color: var(--ivory-faint); }
 
   .btn {
-    background: var(--amber);
+    background: var(--gold);
     color: var(--felt-dark);
     border: none;
-    border-radius: 8px;
-    padding: 14px 24px;
-    font-family: var(--mono);
+    border-radius: 10px;
+    padding: 15px 28px;
+    font-family: var(--serif);
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(212,168,50,0.25);
   }
 
-  .btn:hover { background: var(--amber-dark); }
+  .btn:hover {
+    background: var(--gold-light);
+    box-shadow: 0 6px 20px rgba(212,168,50,0.35);
+  }
   .btn:active { transform: scale(0.97); }
 
   .btn-ghost {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
-    color: var(--ivory);
-    border-radius: 8px;
-    padding: 12px 24px;
+    border: 1px solid rgba(255,255,255,0.18);
+    color: var(--ivory-dim);
+    border-radius: 10px;
+    padding: 13px 28px;
     font-family: var(--mono);
     font-size: 13px;
     cursor: pointer;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, color 0.2s;
   }
-  .btn-ghost:hover { border-color: var(--amber); color: var(--amber); }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
 
   .divider {
     display: flex;
     align-items: center;
-    gap: 12px;
-    color: var(--ivory-shadow);
-    font-size: 11px;
+    gap: 14px;
+    color: var(--ivory-faint);
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
   }
   .divider::before, .divider::after {
     content: '';
     flex: 1;
     height: 1px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
   }
 
   .room-code-display {
-    background: var(--felt-dark);
-    border: 2px solid var(--amber);
-    border-radius: 10px;
-    padding: 16px;
+    background: rgba(0,0,0,0.4);
+    border: 2px solid var(--gold);
+    border-radius: 12px;
+    padding: 18px;
     text-align: center;
-    font-size: 28px;
+    font-family: var(--serif);
+    font-size: 32px;
     font-weight: 700;
-    letter-spacing: 0.3em;
-    color: var(--amber);
+    letter-spacing: 0.35em;
+    color: var(--gold);
     cursor: pointer;
-    position: relative;
+    transition: box-shadow 0.2s;
   }
+  .room-code-display:hover { box-shadow: 0 0 0 3px rgba(212,168,50,0.2); }
 
   .room-code-display .copy-hint {
+    font-family: var(--mono);
     font-size: 10px;
-    letter-spacing: 0.1em;
-    color: var(--ivory-shadow);
+    letter-spacing: 0.12em;
+    color: var(--ivory-faint);
     margin-top: 6px;
     display: block;
     font-weight: 400;
   }
 
-  .player-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
+  .player-list { display: flex; flex-direction: column; gap: 8px; }
 
   .player-item {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 10px 14px;
-    background: var(--felt-dark);
+    padding: 11px 16px;
+    background: rgba(0,0,0,0.25);
     border-radius: 8px;
     font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.05);
   }
 
   .player-dot {
-    width: 8px;
-    height: 8px;
+    width: 8px; height: 8px;
     border-radius: 50%;
-    background: var(--highlight);
+    background: var(--green-good);
     flex-shrink: 0;
   }
-
-  .player-dot.host { background: var(--amber); }
+  .player-dot.host { background: var(--gold); }
 
   .status-text {
     font-size: 11px;
-    letter-spacing: 0.1em;
-    color: var(--ivory-shadow);
+    letter-spacing: 0.08em;
+    color: var(--ivory-faint);
     text-align: center;
   }
 
-  /* ── GAME TABLE ── */
+  .error-msg {
+    font-size: 12px;
+    color: var(--red-bad);
+    text-align: center;
+    min-height: 16px;
+  }
+
+  /* ── GAME ─────────────────────────────── */
   #game { display: none; flex-direction: column; min-height: 100vh; }
 
   .game-header {
@@ -231,52 +266,95 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px 20px;
-    background: rgba(0,0,0,0.3);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(212,168,50,0.12);
+    flex-shrink: 0;
+    gap: 12px;
+  }
+
+  .game-logo {
+    font-family: var(--serif);
+    font-size: 22px;
+    color: var(--gold);
+    letter-spacing: 0.15em;
     flex-shrink: 0;
   }
 
-  .game-title {
-    font-family: var(--serif);
-    font-size: 20px;
-    color: var(--amber);
-  }
-
   .turn-indicator {
-    font-size: 11px;
+    font-family: var(--serif);
+    font-size: 12px;
     letter-spacing: 0.12em;
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 7px 18px;
+    border-radius: 30px;
     background: rgba(0,0,0,0.3);
     border: 1px solid rgba(255,255,255,0.1);
     transition: all 0.3s;
+    white-space: nowrap;
   }
 
   .turn-indicator.my-turn {
-    background: var(--amber);
+    background: var(--gold);
     color: var(--felt-dark);
-    border-color: var(--amber);
+    border-color: var(--gold);
     font-weight: 700;
+    animation: turnPulse 1.6s ease infinite;
   }
+
+  .turn-indicator.my-turn-two {
+    background: var(--green-good);
+    color: var(--felt-dark);
+    border-color: var(--green-good);
+    font-weight: 700;
+    animation: turnPulseGreen 1.6s ease infinite;
+  }
+
+  @keyframes turnPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(212,168,50,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(212,168,50,0); }
+  }
+
+  @keyframes turnPulseGreen {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(62,200,120,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(62,200,120,0); }
+  }
+
+  .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ivory-faint);
+    flex-shrink: 0;
+  }
+
+  .conn-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green-good);
+  }
+  .conn-dot.connecting { background: var(--gold); animation: pulse 1s infinite; }
+  .conn-dot.disconnected { background: var(--red-bad); }
 
   .game-body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 0;
     padding: 16px;
+    gap: 0;
     overflow-y: auto;
   }
 
-  /* Opponents zone */
+  /* Opponents */
   .opponents-zone {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
+    gap: 20px;
     justify-content: center;
-    padding-bottom: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 16px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    margin-bottom: 18px;
   }
 
   .opponent-area {
@@ -284,27 +362,59 @@
     flex-direction: column;
     align-items: center;
     gap: 8px;
-    min-width: 120px;
+    min-width: 110px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.05);
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .opponent-area.active-opp {
+    border-color: rgba(212,168,50,0.4);
+    background: rgba(212,168,50,0.05);
   }
 
   .opponent-name {
-    font-size: 10px;
-    letter-spacing: 0.15em;
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--ivory-shadow);
-    position: relative;
+    color: var(--ivory-dim);
   }
 
-  .opponent-name.active-player::after {
-    content: ' ▶';
-    color: var(--amber);
+  .opponent-name.active-player { color: var(--gold); }
+
+  .turn-arrow {
+    color: var(--gold);
+    font-size: 10px;
+    animation: blink 1s ease infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
   }
 
   .opponent-cards {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: wrap;
     justify-content: center;
+  }
+
+  .hand-count-badge {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--ivory-faint);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-top: 2px;
+  }
+  .hand-count-badge.empty {
+    color: var(--green-good);
+    border-color: rgba(62,200,120,0.25);
   }
 
   /* Table center */
@@ -312,8 +422,8 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    gap: 40px;
-    padding: 20px 0;
+    gap: 48px;
+    padding: 20px 0 24px;
     flex-wrap: wrap;
   }
 
@@ -325,149 +435,250 @@
   }
 
   .pile-label {
+    font-family: var(--serif);
     font-size: 10px;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--ivory-shadow);
+    color: var(--ivory-faint);
   }
 
   .pile-count {
-    font-size: 11px;
-    color: var(--ivory-shadow);
+    font-size: 10px;
+    color: var(--ivory-faint);
+    letter-spacing: 0.06em;
   }
 
   /* My area */
   .my-area {
-    border-top: 1px solid rgba(255,255,255,0.06);
-    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.07);
+    padding-top: 18px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
+    border-radius: 16px;
+    padding: 18px 12px 12px;
+    transition: box-shadow 0.4s, border-color 0.4s;
+  }
+
+  .my-area.active-turn {
+    box-shadow: 0 0 0 2px var(--gold), 0 0 32px rgba(212,168,50,0.15);
+  }
+
+  .my-area.must-play-two {
+    box-shadow: 0 0 0 2px var(--green-good), 0 0 32px rgba(62,200,120,0.15);
   }
 
   .my-name {
-    font-size: 10px;
-    letter-spacing: 0.15em;
+    font-family: var(--serif);
+    font-size: 11px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: var(--ivory-shadow);
+    color: var(--ivory-faint);
   }
 
   .palace-row {
     display: flex;
-    gap: 8px;
+    gap: 10px;
     justify-content: center;
     flex-wrap: wrap;
   }
 
   .palace-slot {
     position: relative;
-    width: 64px;
-    height: 90px;
+    width: 68px;
+    height: 96px;
   }
 
-  /* Card styles */
+  /* ── CARDS ────────────────────────────── */
   .card {
-    width: 64px;
-    height: 90px;
-    border-radius: 8px;
+    width: 68px;
+    height: 96px;
+    border-radius: 10px;
     background: var(--ivory);
-    border: 1.5px solid var(--ivory-shadow);
+    border: 1.5px solid rgba(0,0,0,0.15);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--mono);
     font-weight: 700;
-    font-size: 14px;
+    font-size: 15px;
     position: relative;
     cursor: default;
     flex-shrink: 0;
     user-select: none;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.6);
+    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+    overflow: hidden;
   }
 
   .card.red { color: var(--red-suit); }
   .card.black { color: var(--black-suit); }
 
+  /* subtle inner pattern on face cards */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 6px;
+    border: 0.5px solid rgba(0,0,0,0.07);
+    pointer-events: none;
+  }
+
   .card.face-down {
-    background: linear-gradient(135deg, #1a5c38 25%, #1e6b42 25%, #1e6b42 50%, #1a5c38 50%, #1a5c38 75%, #1e6b42 75%);
-    background-size: 12px 12px;
-    border: 1.5px solid rgba(255,255,255,0.15);
+    background: #1e5c38;
+    border: 1.5px solid rgba(255,255,255,0.1);
     cursor: default;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+
+  /* diamond pattern for back */
+  .card.face-down::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg,
+        rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px,
+        transparent 1px, transparent 8px),
+      repeating-linear-gradient(-45deg,
+        rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px,
+        transparent 1px, transparent 8px);
+    border-radius: 0;
+    border: none;
   }
 
   .card.face-down::after {
     content: '♠';
-    font-size: 20px;
-    color: rgba(255,255,255,0.15);
+    font-size: 22px;
+    color: rgba(255,255,255,0.12);
+    position: relative;
+    z-index: 1;
   }
 
-  .card.selectable {
-    cursor: pointer;
-  }
+  .card.selectable { cursor: pointer; }
 
   .card.selectable:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-    border-color: var(--amber);
+    transform: translateY(-10px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.55);
+    border-color: rgba(212,168,50,0.6);
   }
 
   .card.selected {
-    transform: translateY(-14px);
-    box-shadow: 0 10px 24px rgba(232,160,32,0.4);
-    border-color: var(--amber);
+    transform: translateY(-16px);
+    box-shadow: 0 14px 32px rgba(212,168,50,0.4);
+    border-color: var(--gold);
     border-width: 2px;
   }
 
   .card-corner {
     position: absolute;
-    top: 5px;
-    left: 7px;
+    top: 6px;
+    left: 8px;
     font-size: 12px;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
     display: flex;
     flex-direction: column;
     align-items: center;
   }
 
-  .card-corner .suit-small {
-    font-size: 10px;
-  }
-
-  .card-center-suit {
-    font-size: 26px;
-  }
-
-  /* Draw pile stacked offset */
-  .card-pile-stack {
-    position: relative;
-    width: 64px;
-    height: 90px;
-  }
-  .card-pile-stack .card {
+  .card-corner-bottom {
     position: absolute;
-    top: 0;
-    left: 0;
+    bottom: 6px;
+    right: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: rotate(180deg);
   }
-  .card-pile-stack .card:nth-child(2) { transform: translate(2px, -2px); }
-  .card-pile-stack .card:nth-child(3) { transform: translate(4px, -4px); }
 
-  /* Play pile: vertical fan showing a sliver of each card */
-  .play-pile-fan {
-    position: relative;
-    width: 64px;
-    /* height set dynamically via JS */
+  .suit-small { font-size: 11px; }
+
+  .card-center-suit { font-size: 28px; line-height: 1; }
+
+  /* special card glow */
+  .card.special-2 { border-color: rgba(74,158,221,0.5); }
+  .card.special-2.selectable:hover, .card.special-2.selected {
+    border-color: var(--blue-info);
+    box-shadow: 0 12px 28px rgba(74,158,221,0.35);
   }
+  .card.special-7 { border-color: rgba(62,200,120,0.4); }
+  .card.special-10 { border-color: rgba(212,168,50,0.5); }
+  .card.special-10.selectable:hover, .card.special-10.selected {
+    border-color: var(--gold);
+    box-shadow: 0 12px 28px rgba(212,168,50,0.4);
+  }
+
+  /* Small card for opponents */
+  .card-sm {
+    width: 44px;
+    height: 62px;
+    border-radius: 7px;
+    background: var(--ivory);
+    border: 1px solid rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-weight: 700;
+    font-size: 11px;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+  .card-sm.red { color: var(--red-suit); }
+  .card-sm.black { color: var(--black-suit); }
+
+  .card-sm.face-down {
+    background: #1e5c38;
+    border: 1px solid rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .card-sm.face-down::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(45deg,
+        rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px,
+        transparent 1px, transparent 6px),
+      repeating-linear-gradient(-45deg,
+        rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px,
+        transparent 1px, transparent 6px);
+  }
+  .card-sm.face-down::after { content: '♠'; font-size: 14px; color: rgba(255,255,255,0.12); }
+
+  .card-sm-rank { font-size: 13px; font-weight: 700; line-height: 1; }
+  .card-sm-suit { font-size: 11px; line-height: 1; }
+
+  /* Draw pile stacked */
+  .card-pile-stack { position: relative; width: 68px; height: 96px; }
+  .card-pile-stack .card { position: absolute; top: 0; left: 0; }
+  .card-pile-stack .card:nth-child(2) { transform: translate(2px,-2px); }
+  .card-pile-stack .card:nth-child(3) { transform: translate(4px,-4px); }
+
+  /* Play pile fan */
+  .play-pile-fan { position: relative; width: 68px; }
   .play-pile-fan .card {
     position: absolute;
     left: 0;
-    width: 64px;
-    height: 90px;
-    /* top set per card by JS */
+    width: 68px;
+    height: 96px;
   }
-  /* Sliver label shown on buried cards */
+
+  /* For sliver cards in the play pile fan, show rank+suit as a horizontal strip */
+  .card.sliver {
+    /* Only a narrow strip is visible, so we show label differently */
+  }
+  .card.sliver .card-corner,
+  .card.sliver .card-center-suit,
+  .card.sliver .card-corner-bottom { display: none; }
   .card .sliver-label {
     display: none;
   }
@@ -477,78 +688,119 @@
     gap: 3px;
     position: absolute;
     top: 50%;
-    left: 7px;
-    transform: translateY(-50%);
-    font-size: 13px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
     font-weight: 700;
     pointer-events: none;
+    white-space: nowrap;
   }
-  .card.sliver .card-corner,
-  .card.sliver .card-center-suit {
-    display: none;
-  }
+
+  /* Palace slot stacking */
+  .palace-slot .card { position: absolute; top: 0; left: 0; }
+  .palace-slot .card:nth-child(2) { top: 3px; left: 2px; }
+  .palace-slot .card:nth-child(3) { top: 6px; left: 4px; }
 
   .hand-cards {
     display: flex;
-    gap: 6px;
+    gap: 8px;
     justify-content: center;
     flex-wrap: wrap;
   }
-
-  /* Face-up palace cards in a slot */
-  .palace-slot .card {
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  .palace-slot .card:nth-child(2) { top: 3px; left: 2px; }
-  .palace-slot .card:nth-child(3) { top: 6px; left: 4px; }
 
   /* Action buttons */
   .action-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 12px 0 4px;
+    padding: 10px 0 4px;
   }
 
   .btn-play {
-    background: var(--highlight);
+    background: var(--green-good);
     color: var(--felt-dark);
     border: none;
-    border-radius: 8px;
-    padding: 12px 28px;
-    font-family: var(--mono);
+    border-radius: 10px;
+    padding: 13px 32px;
+    font-family: var(--serif);
     font-size: 13px;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.1em;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+    box-shadow: 0 4px 16px rgba(62,200,120,0.25);
   }
 
-  .btn-play:hover { background: #3ab96e; }
+  .btn-play:hover { background: #33b86a; box-shadow: 0 6px 20px rgba(62,200,120,0.35); }
   .btn-play:active { transform: scale(0.97); }
-  .btn-play:disabled { background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.3); cursor: not-allowed; }
+  .btn-play:disabled {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.25);
+    cursor: not-allowed;
+    box-shadow: none;
+  }
 
   .btn-pickup {
     background: transparent;
-    border: 1px solid var(--danger);
-    color: var(--danger);
-    border-radius: 8px;
-    padding: 12px 20px;
+    border: 1px solid rgba(232,64,64,0.5);
+    color: var(--red-bad);
+    border-radius: 10px;
+    padding: 13px 22px;
     font-family: var(--mono);
-    font-size: 13px;
+    font-size: 12px;
     cursor: pointer;
     transition: all 0.15s;
   }
 
-  .btn-pickup:hover { background: var(--danger); color: white; }
-  .btn-pickup:disabled { opacity: 0.3; cursor: not-allowed; border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.3); }
-  .btn-pickup:disabled:hover { background: transparent; }
+  .btn-pickup:hover { background: var(--red-bad); color: white; border-color: var(--red-bad); }
+  .btn-pickup:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    border-color: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.25);
+  }
+  .btn-pickup:disabled:hover { background: transparent; color: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.15); }
 
-  /* Toast notifications */
+  .setup-instructions {
+    font-size: 11px;
+    color: var(--ivory-faint);
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding: 6px 12px;
+    background: rgba(212,168,50,0.06);
+    border: 1px solid rgba(212,168,50,0.15);
+    border-radius: 8px;
+  }
+
+  /* Discard empty slot */
+  .discard-empty {
+    width: 68px;
+    height: 96px;
+    border-radius: 10px;
+    border: 2px dashed rgba(255,255,255,0.12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.1);
+    font-size: 26px;
+  }
+
+  .deck-badge {
+    background: rgba(0,0,0,0.45);
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 10px;
+    color: var(--ivory-faint);
+    position: absolute;
+    bottom: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    letter-spacing: 0.05em;
+  }
+
+  /* Toast */
   #toast-container {
     position: fixed;
     top: 70px;
@@ -562,105 +814,145 @@
   }
 
   .toast {
-    background: rgba(15, 35, 24, 0.95);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
-    padding: 10px 20px;
+    background: rgba(10, 28, 18, 0.96);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 11px 22px;
+    font-family: var(--mono);
     font-size: 12px;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.06em;
     text-align: center;
     animation: toastIn 0.3s ease, toastOut 0.4s ease 2.6s forwards;
-    backdrop-filter: blur(8px);
-    max-width: 320px;
+    max-width: 340px;
     white-space: nowrap;
+    color: var(--ivory-dim);
   }
 
   .toast.special {
-    border-color: var(--amber);
-    color: var(--amber);
-    font-weight: 700;
+    border-color: var(--gold);
+    color: var(--gold);
+    font-family: var(--serif);
     font-size: 14px;
+    font-weight: 700;
   }
 
-  .toast.good { border-color: var(--highlight); color: var(--highlight); }
-  .toast.bad { border-color: var(--danger); color: var(--danger); }
+  .toast.good { border-color: var(--green-good); color: var(--green-good); }
+  .toast.bad { border-color: var(--red-bad); color: var(--red-bad); }
 
   @keyframes toastIn {
-    from { opacity: 0; transform: translateY(-12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(-14px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
   @keyframes toastOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from { opacity: 1; } to { opacity: 0; }
   }
 
   /* Modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.75);
     display: flex; align-items: center; justify-content: center;
     z-index: 500;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px);
   }
 
   .modal {
-    background: var(--felt);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 16px;
-    padding: 40px;
-    max-width: 420px;
-    width: 90%;
+    background: var(--felt-mid);
+    border: 1px solid rgba(212,168,50,0.2);
+    border-radius: 20px;
+    padding: 44px;
+    max-width: 440px;
+    width: 92%;
     text-align: center;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
   }
 
   .modal h2 {
     font-family: var(--serif);
-    font-size: 28px;
-    color: var(--amber);
+    font-size: 30px;
+    color: var(--gold);
+    letter-spacing: 0.1em;
   }
 
-  .modal p { font-size: 13px; color: var(--ivory-shadow); line-height: 1.6; }
+  .modal p {
+    font-size: 13px;
+    color: var(--ivory-dim);
+    line-height: 1.7;
+  }
 
-  /* Setup phase: choose face-up palace cards */
-  .setup-instructions {
+  .rules-content {
+    text-align: left;
     font-size: 12px;
-    color: var(--ivory-shadow);
-    letter-spacing: 0.05em;
+    line-height: 1.9;
+    color: var(--ivory-dim);
+  }
+
+  .rules-content strong { color: var(--gold); }
+
+  .special-card-list {
+    background: rgba(0,0,0,0.25);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 4px 0;
+    border: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .special-card-list li {
+    list-style: none;
+    padding: 4px 0;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+
+  .special-card-list .rank-badge {
+    font-family: var(--serif);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(212,168,50,0.1);
+    border: 1px solid rgba(212,168,50,0.2);
+    border-radius: 4px;
+    padding: 1px 7px;
+    white-space: nowrap;
+    min-width: 28px;
     text-align: center;
   }
 
+  .rules-btn {
+    background: transparent;
+    border: none;
+    color: var(--ivory-faint);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    letter-spacing: 0.05em;
+  }
+  .rules-btn:hover { color: var(--gold); }
+
+  /* Phase badge */
   .phase-badge {
     display: inline-block;
     font-size: 10px;
     letter-spacing: 0.15em;
     text-transform: uppercase;
-    padding: 4px 10px;
+    padding: 4px 12px;
     border-radius: 4px;
-    background: rgba(232,160,32,0.15);
-    border: 1px solid rgba(232,160,32,0.3);
-    color: var(--amber);
-  }
-
-  /* Discard pile visual */
-  .discard-empty {
-    width: 64px;
-    height: 90px;
-    border-radius: 8px;
-    border: 2px dashed rgba(255,255,255,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255,255,255,0.15);
-    font-size: 24px;
+    background: rgba(212,168,50,0.1);
+    border: 1px solid rgba(212,168,50,0.25);
+    color: var(--gold);
+    font-family: var(--serif);
   }
 
   .waiting-msg {
     text-align: center;
-    color: var(--ivory-shadow);
+    color: var(--ivory-faint);
     font-size: 12px;
     letter-spacing: 0.08em;
     padding: 20px;
@@ -668,123 +960,36 @@
   }
 
   @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+    0%, 100% { opacity: 0.5; } 50% { opacity: 1; }
   }
 
-  /* Deck counter */
-  .deck-badge {
-    background: rgba(0,0,0,0.4);
-    border-radius: 4px;
-    padding: 2px 6px;
-    font-size: 10px;
-    color: var(--ivory-shadow);
-    position: absolute;
-    bottom: -20px;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
+  /* Winner confetti strip */
+  .confetti-strip {
+    font-size: 24px;
+    letter-spacing: 0.1em;
+    margin: -4px 0;
   }
 
-  /* Rules box */
-  .rules-btn {
-    background: transparent;
-    border: none;
-    color: var(--ivory-shadow);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    text-decoration: underline;
-    text-decoration-style: dotted;
-  }
-
-  .rules-btn:hover { color: var(--amber); }
-
-  .rules-content {
-    text-align: left;
-    font-size: 11px;
-    line-height: 1.8;
-    color: var(--ivory-shadow);
-  }
-
-  .rules-content strong { color: var(--amber); }
-
-  .error-msg {
-    font-size: 12px;
-    color: var(--danger);
-    text-align: center;
-    min-height: 16px;
-  }
-
-  /* Hand count badge for opponents */
-  .hand-count-badge {
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    color: var(--ivory-shadow);
-    background: rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 20px;
-    padding: 3px 10px;
-    margin-top: 4px;
-  }
-  .hand-count-badge.empty {
-    color: var(--highlight);
-    border-color: rgba(78,207,128,0.3);
-  }
-
-  /* My-turn pulsing glow on the my-area panel */
-  .my-area {
-    border-radius: 12px;
-    transition: box-shadow 0.4s, border-color 0.4s;
-  }
-  .my-area.active-turn {
-    box-shadow: 0 0 0 2px var(--amber), 0 0 28px rgba(232,160,32,0.25);
-    border-color: var(--amber) !important;
-  }
-  .my-area.must-play-two {
-    box-shadow: 0 0 0 2px var(--highlight), 0 0 28px rgba(78,207,128,0.25);
-    border-color: var(--highlight) !important;
-  }
-
-  /* Pulsing animation for turn arrow in header */
-  @keyframes turnPulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(232,160,32,0.5); }
-    50% { box-shadow: 0 0 0 6px rgba(232,160,32,0); }
-  }
-  .turn-indicator.my-turn {
-    animation: turnPulse 1.4s ease infinite;
-  }
-
-  .connection-status {
+  /* play-order label */
+  .order-label {
     font-size: 10px;
     letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 4px 10px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    color: var(--ivory-faint);
+    text-align: center;
+    padding: 4px 0 2px;
   }
-
-  .conn-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--highlight);
-  }
-
-  .conn-dot.connecting { background: var(--amber); animation: pulse 1s infinite; }
-  .conn-dot.disconnected { background: var(--danger); }
-
 </style>
 </head>
 <body>
 
 <!-- LOBBY -->
 <div id="lobby">
-  <div>
+  <div class="logo-wrap">
     <h1 class="lobby-title">Palace</h1>
-    <p class="lobby-subtitle">The card game</p>
+    <div class="lobby-suits">
+      <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+    </div>
+    <p class="lobby-subtitle">The Card Game</p>
   </div>
 
   <div class="lobby-card">
@@ -811,7 +1016,10 @@
 
 <!-- HOST WAITING ROOM -->
 <div id="waiting-room" style="display:none; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:24px; padding:32px;">
-  <h1 style="font-family:var(--serif); font-size:42px; color:var(--amber);">Waiting for Players</h1>
+  <div style="text-align:center">
+    <h1 style="font-family:var(--serif); font-size:38px; color:var(--gold); letter-spacing:0.1em;">Waiting Room</h1>
+    <p style="font-size:11px;color:var(--ivory-faint);letter-spacing:0.1em;margin-top:6px;">Share the code below with friends</p>
+  </div>
   <div class="lobby-card">
     <h2>Room Code</h2>
     <div class="room-code-display" id="room-code-show" onclick="copyRoomCode()">
@@ -822,8 +1030,7 @@
       <label>Players (<span id="player-count">1</span>/6)</label>
       <div class="player-list" id="player-list"></div>
     </div>
-    <p class="status-text">Share the room code with friends!</p>
-    <p class="status-text" style="font-size:10px;">Need 2–6 players to start</p>
+    <p class="status-text">2–6 players needed to start</p>
     <button class="btn" id="btn-start" disabled>Start Game</button>
     <p class="error-msg" id="waiting-error"></p>
   </div>
@@ -832,7 +1039,7 @@
 <!-- GAME -->
 <div id="game">
   <div class="game-header">
-    <span class="game-title">Palace</span>
+    <span class="game-logo">Palace</span>
     <span class="turn-indicator" id="turn-indicator">Waiting…</span>
     <div class="connection-status">
       <div class="conn-dot" id="conn-dot"></div>
@@ -841,10 +1048,8 @@
   </div>
 
   <div class="game-body">
-    <!-- Opponents -->
     <div class="opponents-zone" id="opponents-zone"></div>
 
-    <!-- Table center -->
     <div class="table-center">
       <div class="pile-area">
         <span class="pile-label">Draw Pile</span>
@@ -860,17 +1065,16 @@
       </div>
     </div>
 
-    <!-- My area -->
     <div class="my-area" id="my-area">
       <span class="my-name" id="my-name-label">You</span>
       <div class="palace-row" id="my-palace-face-down"></div>
       <div class="palace-row" id="my-palace-face-up"></div>
       <div class="hand-cards" id="my-hand"></div>
+      <div class="setup-instructions" id="setup-instructions" style="display:none"></div>
       <div class="action-bar">
         <button class="btn-play" id="btn-play" disabled>Play Selected</button>
         <button class="btn-pickup" id="btn-pickup" disabled>Pick Up Pile</button>
       </div>
-      <div class="setup-instructions" id="setup-instructions" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -880,16 +1084,18 @@
   <div class="modal">
     <h2>Rules</h2>
     <div class="rules-content">
-      <strong>Setup:</strong> Each player gets 3 face-down, 3 face-up (chosen), and 3 hand cards.<br><br>
-      <strong>Goal:</strong> Be the first to empty your hand, face-up, then face-down cards.<br><br>
-      <strong>Play:</strong> Play equal or higher cards on the pile. Refill hand to 3 from the draw pile.<br><br>
-      <strong>Special Cards:</strong><br>
-      <strong>2 ♣</strong> — Wildcard, play on anything. Next player must play on top of it.<br>
-      <strong>7 ♣</strong> — Next player must play a 7 or lower.<br>
-      <strong>10 ♣</strong> — Clears the pile. Play again.<br>
-      <strong>A ♣</strong> — Highest card.<br>
-      <strong>Four of a kind</strong> — Pile clears, last player goes again.<br><br>
-      <strong>Can't play?</strong> Pick up the pile. Play then passes.<br><br>
+      <strong>Setup:</strong> Each player gets 3 face-down palace cards (secret), then 6 hand cards — choose 3 to place face-up on your palace. The remaining 3 stay in your hand.<br><br>
+      <strong>Goal:</strong> Be first to empty your hand, then face-up, then face-down cards.<br><br>
+      <strong>On your turn:</strong> Play a card equal to or higher than the top of the pile, then refill your hand to 3 from the draw pile.<br><br>
+      <strong>Special Cards:</strong>
+      <ul class="special-card-list">
+        <li><span class="rank-badge">2</span> Wildcard — plays on anything. You must then play another card on top of it immediately.</li>
+        <li><span class="rank-badge">7</span> Reverse ceiling — next player must play a 7 or lower.</li>
+        <li><span class="rank-badge">10</span> Nuke — clears the entire pile. Play again.</li>
+        <li><span class="rank-badge">A</span> Highest card (below 2).</li>
+        <li><span class="rank-badge">4-of</span> Four of a kind clears the pile. Same player goes again.</li>
+      </ul>
+      <strong>Can't play?</strong> Pick up the entire pile. Play passes.<br><br>
       <strong>Face-down cards:</strong> Flip blind — if it can't be played, pick it and the pile up.
     </div>
     <button class="btn" onclick="document.getElementById('rules-modal').style.display='none'">Got It</button>
@@ -899,7 +1105,8 @@
 <!-- Winner Modal -->
 <div id="winner-modal" class="modal-overlay" style="display:none">
   <div class="modal">
-    <h2 id="winner-title">🏆 Winner!</h2>
+    <div class="confetti-strip">♠ ♥ ♦ ♣</div>
+    <h2 id="winner-title">Winner!</h2>
     <p id="winner-msg"></p>
     <button class="btn" onclick="location.reload()">Play Again</button>
   </div>
@@ -918,6 +1125,7 @@ const RANK_VALUES = {'3':1,'4':2,'5':3,'6':4,'7':5,'8':6,'9':7,'10':8,'J':9,'Q':
 function cardValue(rank) { return RANK_VALUES[rank] || 0; }
 function isRed(suit) { return suit === '♥' || suit === '♦'; }
 function cardKey(c) { return c.rank + c.suit; }
+
 function shuffle(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -936,30 +1144,50 @@ function makeDeck() {
 
 function topCard(pile) { return pile.length ? pile[pile.length - 1] : null; }
 
-function effectiveTop(pile) {
-  // The effective top for comparison, ignoring 2s
-  for (let i = pile.length - 1; i >= 0; i--) {
-    if (pile[i].rank !== '2') return pile[i];
-  }
-  return null;
-}
-
+// ── THE FIXED canPlay ──────────────────────────
+// Rules:
+//  • 2   → always playable on anything (wildcard)
+//  • 10  → always playable on anything (nuke)
+//  • mustPlayOnTwo (same player who just played a 2 must play again)
+//       → any card is valid
+//  • After a 2 on the pile (top is 2) → any card valid (2 resets the effective top)
+//  • After a 7 on the pile (top non-2/10 is 7) → must play 7 or lower
+//  • Otherwise → must play >= top
 function canPlay(cards, pile, mustPlayOnTwo) {
   if (!cards.length) return false;
   const rank = cards[0].rank;
-  // All selected cards must be same rank
   if (!cards.every(c => c.rank === rank)) return false;
-  // When a 2 was just played, the same player must play again — any card is valid on top of it
-  if (mustPlayOnTwo) return true;
-  // 2 and 10 can always be played
+
+  // 2 and 10 always playable
   if (rank === '2' || rank === '10') return true;
-  const top = effectiveTop(pile);
-  if (!top) return true; // empty pile
-  // If last non-2 card was a 7, must play 7 or lower
-  if (top.rank === '7') {
+
+  // Player is playing on top of their own 2 — anything goes
+  if (mustPlayOnTwo) return true;
+
+  if (!pile.length) return true; // empty pile
+
+  // Find the effective comparison top: the topmost card that is NOT a 10
+  // (10s clear the pile so they shouldn't be sitting there, but be safe)
+  // A 2 on top means the pile's "effective value" resets — anything is valid on a 2
+  const top = pile[pile.length - 1];
+  if (top.rank === '2') return true;  // 2 on top: anything goes
+  if (top.rank === '10') return true; // shouldn't happen but safe
+
+  // 7 rule: the top card's effective rank determines ceiling
+  // We need the effective top ignoring any trailing 2s.
+  // Walk backwards to find the last non-2 card for the "ceiling" check.
+  let effectiveTop = null;
+  for (let i = pile.length - 1; i >= 0; i--) {
+    if (pile[i].rank !== '2') { effectiveTop = pile[i]; break; }
+  }
+
+  if (!effectiveTop) return true; // pile only has 2s — anything goes
+
+  if (effectiveTop.rank === '7') {
     return cardValue(rank) <= cardValue('7');
   }
-  return cardValue(rank) >= cardValue(top.rank);
+
+  return cardValue(rank) >= cardValue(effectiveTop.rank);
 }
 
 function checkFourOfAKind(pile) {
@@ -984,21 +1212,20 @@ function generateRoomCode() {
 // STATE
 // ═══════════════════════════════════════════════
 let peer = null;
-let connections = {}; // peerId -> conn (host only)
-let hostConn = null;  // client -> host connection
+let connections = {};
+let hostConn = null;
 let isHost = false;
 let myPeerId = '';
 let myName = '';
 let roomCode = '';
 
-// Full game state (host maintains this, clients get synced copy)
 let G = null;
 let myPlayerIndex = -1;
 let selectedCards = [];
-let setupSelections = []; // during setup phase
+let setupSelections = [];
 
 // ═══════════════════════════════════════════════
-// PEERJS SETUP
+// PEERJS
 // ═══════════════════════════════════════════════
 function initPeer(id) {
   return new Promise((resolve, reject) => {
@@ -1016,22 +1243,16 @@ document.getElementById('btn-host').onclick = async () => {
   myName = document.getElementById('player-name').value.trim();
   if (!myName) { showLobbyError('Enter your name'); return; }
   clearLobbyError();
-
   roomCode = generateRoomCode();
   const peerId = 'palace-host-' + roomCode.replace('-','');
-
   try {
     await initPeer(peerId);
   } catch(e) {
-    // PeerJS id might conflict, try alternate
     try { await initPeer(peerId + Math.floor(Math.random()*999)); }
     catch(e2) { showLobbyError('Connection failed. Try again.'); return; }
   }
-
   isHost = true;
   myPeerId = peer.id;
-
-  // Listen for incoming connections
   peer.on('connection', conn => {
     conn.on('open', () => {
       connections[conn.peer] = conn;
@@ -1039,7 +1260,6 @@ document.getElementById('btn-host').onclick = async () => {
       conn.on('close', () => {
         delete connections[conn.peer];
         if (G) {
-          // Mark player as disconnected
           const pi = G.players.findIndex(p => p.peerId === conn.peer);
           if (pi >= 0) G.players[pi].disconnected = true;
           broadcastState();
@@ -1049,8 +1269,6 @@ document.getElementById('btn-host').onclick = async () => {
       });
     });
   });
-
-  // Show waiting room
   showWaitingRoom();
 };
 
@@ -1060,33 +1278,21 @@ document.getElementById('btn-join').onclick = async () => {
   if (!myName) { showLobbyError('Enter your name'); return; }
   if (!code) { showLobbyError('Enter a room code'); return; }
   clearLobbyError();
-
   const hostPeerId = 'palace-host-' + code.replace('-','');
-
   try {
     await initPeer('palace-' + Date.now() + Math.floor(Math.random()*9999));
-  } catch(e) {
-    showLobbyError('Connection failed.'); return;
-  }
-
+  } catch(e) { showLobbyError('Connection failed.'); return; }
   myPeerId = peer.id;
   isHost = false;
-
   const conn = peer.connect(hostPeerId, { reliable: true });
   hostConn = conn;
-
-  conn.on('open', () => {
-    conn.send({ type: 'join', name: myName, peerId: myPeerId });
-  });
-
+  conn.on('open', () => { conn.send({ type: 'join', name: myName, peerId: myPeerId }); });
   conn.on('data', data => clientReceive(data));
   conn.on('error', () => showLobbyError('Could not connect to room.'));
   conn.on('close', () => {
     if (G) toast('Disconnected from host', 'bad');
     else showLobbyError('Connection closed.');
   });
-
-  // Timeout
   setTimeout(() => {
     if (!G && document.getElementById('lobby').style.display !== 'none') {
       showLobbyError('Room not found or timed out.');
@@ -1097,7 +1303,7 @@ document.getElementById('btn-join').onclick = async () => {
 // ═══════════════════════════════════════════════
 // WAITING ROOM
 // ═══════════════════════════════════════════════
-let waitingPlayers = []; // [{name, peerId}]
+let waitingPlayers = [];
 
 function showWaitingRoom() {
   document.getElementById('lobby').style.display = 'none';
@@ -1134,7 +1340,6 @@ function hostReceive(fromPeerId, data) {
     if (G) { send(fromPeerId, { type: 'error', msg: 'Game already started' }); return; }
     if (waitingPlayers.length >= 6) { send(fromPeerId, { type: 'error', msg: 'Room full' }); return; }
     waitingPlayers.push({ name: data.name, peerId: fromPeerId });
-    // Tell everyone the updated list
     broadcast({ type: 'waiting', players: waitingPlayers });
     send(fromPeerId, { type: 'joined', roomCode, players: waitingPlayers });
     refreshWaitingRoom();
@@ -1149,7 +1354,6 @@ function clientReceive(data) {
     roomCode = data.roomCode;
     waitingPlayers = data.players;
     document.getElementById('lobby').style.display = 'none';
-    // Show a simple waiting message
     showClientWaiting();
   } else if (data.type === 'waiting') {
     waitingPlayers = data.players;
@@ -1166,10 +1370,8 @@ function clientReceive(data) {
 let clientWaitingShown = false;
 function showClientWaiting() {
   clientWaitingShown = true;
-  document.getElementById('lobby').style.display = 'none';
   document.getElementById('waiting-room').style.display = 'flex';
   document.getElementById('room-code-text').textContent = '...';
-  // Hide start button for clients
   document.getElementById('btn-start').style.display = 'none';
   document.getElementById('room-code-show').style.cursor = 'default';
   refreshClientWaiting();
@@ -1181,7 +1383,8 @@ function refreshClientWaiting() {
   list.innerHTML = waitingPlayers.map(p =>
     `<div class="player-item"><div class="player-dot${p.isHost?' host':''}"></div>${p.name}${p.isHost?' (host)':''}</div>`
   ).join('');
-  document.querySelector('#waiting-room p.status-text').textContent = 'Waiting for host to start…';
+  const st = document.querySelector('#waiting-room p.status-text');
+  if (st) st.textContent = 'Waiting for host to start…';
 }
 
 function updateClientWaiting() {
@@ -1210,10 +1413,8 @@ function sendToHost(action) {
 }
 
 function broadcastState() {
-  // Send full state to all clients
   const stateForBroadcast = JSON.parse(JSON.stringify(G));
   broadcast({ type: 'state', state: stateForBroadcast });
-  // Apply locally for host
   applyState(stateForBroadcast);
 }
 
@@ -1223,7 +1424,7 @@ function broadcastToast(msg, style) {
 }
 
 // ═══════════════════════════════════════════════
-// GAME INITIALIZATION (HOST ONLY)
+// GAME INIT (HOST ONLY)
 // ═══════════════════════════════════════════════
 function startGame() {
   const deck = makeDeck();
@@ -1238,31 +1439,28 @@ function startGame() {
     disconnected: false,
   }));
 
-  // Deal: 3 face-down, 6 to hand (player picks 3 for face-up from their hand)
   for (const player of players) {
     player.faceDown = [deck.pop(), deck.pop(), deck.pop()];
     player.hand = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()];
   }
 
   G = {
-    phase: 'setup',      // setup | play | over
+    phase: 'setup',
     players,
     drawPile: deck,
     playPile: [],
     discard: [],
     currentPlayer: 0,
-    setupCount: 0,       // how many have finished setup
+    setupCount: 0,
     mustPlayOnTwo: false,
-    direction: 1,
   };
 
-  // Host's index
   myPlayerIndex = G.players.findIndex(p => p.peerId === myPeerId);
-  broadcastState(); // applyState inside this will call showGame for host too
+  broadcastState();
 }
 
 // ═══════════════════════════════════════════════
-// GAME ACTIONS (HOST PROCESSES)
+// GAME ACTIONS
 // ═══════════════════════════════════════════════
 function processAction(fromPeerId, action) {
   const pi = G.players.findIndex(p => p.peerId === fromPeerId);
@@ -1271,24 +1469,19 @@ function processAction(fromPeerId, action) {
 
   if (action.type === 'setup_done') {
     if (G.phase !== 'setup' || player.setupDone) return;
-    // action.faceUp: array of card objects player chose as face-up
     const chosen = action.faceUp;
     if (chosen.length !== 3) return;
-    // Validate they're all in hand
     const handKeys = player.hand.map(cardKey);
     if (!chosen.every(c => handKeys.includes(cardKey(c)))) return;
     player.faceUp = chosen;
-    // Remove from hand
     const chosenKeys = chosen.map(cardKey);
     player.hand = player.hand.filter(c => !chosenKeys.includes(cardKey(c)));
     player.setupDone = true;
     G.setupCount++;
     if (G.setupCount === G.players.length) {
       G.phase = 'play';
-      // Determine who goes first: player with lowest card in hand
-      // (simplified: just player 0)
       G.currentPlayer = 0;
-      broadcastToast('Game started! Player ' + G.players[0].name + ' goes first.', 'good');
+      broadcastToast('Game started! ' + G.players[0].name + ' goes first.', 'good');
     }
     broadcastState();
     return;
@@ -1297,48 +1490,35 @@ function processAction(fromPeerId, action) {
   if (action.type === 'play') {
     if (G.phase !== 'play') return;
     if (G.currentPlayer !== pi) return;
-    const cards = action.cards; // array of {rank, suit}
-
-    // Validate cards are in player's available pool
+    const cards = action.cards;
     const source = getPlayableSource(player);
     if (!source) return;
-
-    // Validate all cards have same rank
     if (!cards.length || !cards.every(c => c.rank === cards[0].rank)) return;
 
-    // Check if playing from face-down (blind)
     const isBlind = source === 'faceDown';
 
     if (isBlind) {
-      // Can only play one face-down at a time
       if (cards.length !== 1) return;
       const c = cards[0];
-      // Check it's actually in faceDown
       if (!player.faceDown.some(fd => fd.rank === c.rank && fd.suit === c.suit)) return;
-      // Flip it - check if valid
-      if (!canPlay([c], G.playPile)) {
-        // Invalid: add to pile, player picks up pile + this card
+      if (!canPlay([c], G.playPile, false)) {
         player.faceDown = player.faceDown.filter(fd => !(fd.rank === c.rank && fd.suit === c.suit));
         G.playPile.push(c);
-        broadcastToast(`${player.name} flipped ${c.rank}${c.suit} — can't play it, picks up the pile!`, 'bad');
+        broadcastToast(`${player.name} flipped ${c.rank}${c.suit} — picks up the pile!`, 'bad');
         player.hand = player.hand.concat(G.playPile);
         G.playPile = [];
-        advanceTurn(pi, false);
+        G.mustPlayOnTwo = false;
+        advanceTurn(pi);
         broadcastState();
         return;
       }
-      // Valid: play it
       player.faceDown = player.faceDown.filter(fd => !(fd.rank === c.rank && fd.suit === c.suit));
       afterPlay(pi, [c]);
     } else {
-      // Playing from hand or face-up
       const poolCards = source === 'hand' ? player.hand : player.faceUp;
-      // Validate cards are in pool
       const poolKeys = poolCards.map(cardKey);
       if (!cards.every(c => poolKeys.includes(cardKey(c)))) return;
-      // Check playability
       if (!canPlay(cards, G.playPile, G.mustPlayOnTwo)) return;
-      // Remove from pool
       const playedKeys = cards.map(cardKey);
       if (source === 'hand') {
         player.hand = player.hand.filter(c => !playedKeys.includes(cardKey(c)));
@@ -1353,12 +1533,11 @@ function processAction(fromPeerId, action) {
     if (G.phase !== 'play') return;
     if (G.currentPlayer !== pi) return;
     if (!G.playPile.length) return;
-    // Pick up pile
     player.hand = player.hand.concat(G.playPile);
     G.playPile = [];
     G.mustPlayOnTwo = false;
     broadcastToast(`${player.name} picked up the pile.`, 'bad');
-    advanceTurn(pi, false);
+    advanceTurn(pi);
     broadcastState();
   }
 }
@@ -1366,52 +1545,44 @@ function processAction(fromPeerId, action) {
 function afterPlay(pi, cards) {
   const player = G.players[pi];
   const rank = cards[0].rank;
-
-  // Add to play pile
   G.playPile.push(...cards);
 
-  // Check for 10 (clear + go again)
   if (rank === '10') {
     G.discard.push(...G.playPile);
     G.playPile = [];
+    G.mustPlayOnTwo = false;
     refillHand(player);
-    broadcastToast(`${player.name} played a 10 — pile cleared! Play again.`, 'special');
-    broadcastState();
-    checkWin(pi);
+    broadcastToast(`${player.name} played a 10 — NUKE! Pile cleared. Play again.`, 'special');
+    if (!checkWin(pi)) broadcastState();
     return;
   }
 
-  // Check for four of a kind
   if (checkFourOfAKind(G.playPile)) {
     G.discard.push(...G.playPile);
     G.playPile = [];
+    G.mustPlayOnTwo = false;
     refillHand(player);
     broadcastToast(`Four of a kind! Pile cleared — ${player.name} goes again.`, 'special');
-    broadcastState();
-    checkWin(pi);
+    if (!checkWin(pi)) broadcastState();
     return;
   }
 
-  // 7: next player must play 7 or lower — handled naturally by effectiveTop in canPlay
-
-  // 2 house rule: wildcard, but the SAME player who played it must immediately play another card on top.
-  // Keep currentPlayer the same; set a flag so the UI shows the constraint.
   if (rank === '2') {
+    // Wildcard: same player must play again immediately on top of it
     refillHand(player);
     G.mustPlayOnTwo = true;
-    broadcastToast(`${player.name} played a 2 — must play again on top of it!`, 'special');
-    checkWin(pi);
-    broadcastState();
+    broadcastToast(`${player.name} played a 2 — must play on top of it!`, 'special');
+    if (!checkWin(pi)) broadcastState();
     return;
   }
 
-  // Clear the two-play flag once any non-2 card is played
+  // Normal card: clear the two-play flag, advance turn
   G.mustPlayOnTwo = false;
-
   refillHand(player);
-  advanceTurn(pi, true);
-  checkWin(pi);
-  broadcastState();
+  if (!checkWin(pi)) {
+    advanceTurn(pi);
+    broadcastState();
+  }
 }
 
 function refillHand(player) {
@@ -1420,18 +1591,12 @@ function refillHand(player) {
   }
 }
 
-function advanceTurn(pi, forward) {
-  if (forward) {
-    G.currentPlayer = (pi + 1) % G.players.length;
-    // Skip disconnected players
-    let tries = 0;
-    while (G.players[G.currentPlayer].disconnected && tries < G.players.length) {
-      G.currentPlayer = (G.currentPlayer + 1) % G.players.length;
-      tries++;
-    }
-  } else {
-    // Same direction, just advance
-    G.currentPlayer = (pi + 1) % G.players.length;
+function advanceTurn(pi) {
+  G.currentPlayer = (pi + 1) % G.players.length;
+  let tries = 0;
+  while (G.players[G.currentPlayer].disconnected && tries < G.players.length) {
+    G.currentPlayer = (G.currentPlayer + 1) % G.players.length;
+    tries++;
   }
 }
 
@@ -1440,30 +1605,29 @@ function checkWin(pi) {
   if (player.hand.length === 0 && player.faceUp.length === 0 && player.faceDown.length === 0) {
     G.phase = 'over';
     G.winner = pi;
+    G.mustPlayOnTwo = false;
     broadcastToast(`🏆 ${player.name} wins!`, 'special');
-    setTimeout(() => {
-      broadcast({ type: 'toast', msg: `${player.name} has won the game!`, style: 'special' });
-    }, 500);
+    broadcastState();
+    return true;
   }
+  return false;
 }
 
 function getPlayableSource(player) {
   if (player.hand.length > 0) return 'hand';
-  if (player.faceDown.length === 0 && player.faceUp.length === 0 && player.hand.length === 0) return null;
   if (player.faceUp.length > 0) return 'faceUp';
   if (player.faceDown.length > 0) return 'faceDown';
   return null;
 }
 
 // ═══════════════════════════════════════════════
-// CLIENT: APPLY STATE + RENDER
+// APPLY STATE + RENDER
 // ═══════════════════════════════════════════════
 function applyState(state) {
   G = state;
   if (myPlayerIndex < 0) {
     myPlayerIndex = G.players.findIndex(p => p.peerId === myPeerId);
   }
-  // Always ensure the game panel is visible before rendering
   showGame();
 }
 
@@ -1476,62 +1640,75 @@ function showGame() {
 
 function renderGame() {
   if (!G) return;
-
   const me = G.players[myPlayerIndex];
   if (!me) return;
 
-  // Turn indicator
   const isMyTurn = G.phase === 'play' && G.currentPlayer === myPlayerIndex;
+
+  // Turn indicator
   const turnEl = document.getElementById('turn-indicator');
+  turnEl.className = 'turn-indicator';
   if (G.phase === 'setup') {
-    turnEl.textContent = me.setupDone ? 'Waiting for others…' : 'Choose your face-up cards';
-    turnEl.classList.remove('my-turn');
+    turnEl.textContent = me.setupDone ? 'Waiting for others…' : 'Choose face-up cards';
   } else if (G.phase === 'over') {
-    turnEl.textContent = G.winner === myPlayerIndex ? '🏆 You Win!' : `${G.players[G.winner]?.name} Wins!`;
-    turnEl.classList.toggle('my-turn', G.winner === myPlayerIndex);
+    const winnerName = G.players[G.winner]?.name;
+    turnEl.textContent = G.winner === myPlayerIndex ? '🏆 You Win!' : `${winnerName} Wins!`;
+    if (G.winner === myPlayerIndex) turnEl.classList.add('my-turn');
     showWinnerModal(G.winner);
   } else {
     const cur = G.players[G.currentPlayer];
     if (isMyTurn && G.mustPlayOnTwo) {
       turnEl.textContent = 'Play on your 2 ▶';
+      turnEl.classList.add('my-turn-two');
+    } else if (isMyTurn) {
+      turnEl.textContent = 'Your Turn ▶';
+      turnEl.classList.add('my-turn');
     } else {
-      turnEl.textContent = isMyTurn ? 'Your Turn ▶' : `${cur.name}'s Turn`;
+      turnEl.textContent = `${cur.name}'s Turn`;
     }
-    turnEl.classList.toggle('my-turn', isMyTurn);
   }
 
-  // Opponents
+  // ── OPPONENTS in play order starting from next seat ──
   const oppZone = document.getElementById('opponents-zone');
   oppZone.innerHTML = '';
-  G.players.forEach((p, i) => {
-    if (i === myPlayerIndex) return;
-    const div = document.createElement('div');
-    div.className = 'opponent-area';
+
+  // Build display order: start from the player after me, go around in play order
+  const total = G.players.length;
+  const orderedIndices = [];
+  for (let offset = 1; offset < total; offset++) {
+    orderedIndices.push((myPlayerIndex + offset) % total);
+  }
+
+  orderedIndices.forEach((i) => {
+    const p = G.players[i];
     const isActive = G.currentPlayer === i && G.phase === 'play';
-    div.innerHTML = `<span class="opponent-name${isActive ? ' active-player' : ''}">${p.name}${p.disconnected ? ' (left)' : ''}</span>`;
+    const div = document.createElement('div');
+    div.className = 'opponent-area' + (isActive ? ' active-opp' : '');
+
+    const nameEl = document.createElement('span');
+    nameEl.className = 'opponent-name' + (isActive ? ' active-player' : '');
+    nameEl.textContent = p.name + (p.disconnected ? ' (left)' : '');
+    if (isActive) {
+      const arrow = document.createElement('span');
+      arrow.className = 'turn-arrow';
+      arrow.textContent = ' ▶';
+      nameEl.appendChild(arrow);
+    }
+    div.appendChild(nameEl);
 
     const cardsDiv = document.createElement('div');
     cardsDiv.className = 'opponent-cards';
 
-    // Face-down palace cards
-    p.faceDown.forEach(() => {
-      cardsDiv.appendChild(makeCardEl({ faceDown: true }));
-    });
-
-    // Face-up palace cards
-    p.faceUp.forEach(c => {
-      cardsDiv.appendChild(makeCardEl(c));
-    });
-
+    p.faceDown.forEach(() => cardsDiv.appendChild(makeSmallCardEl({ faceDown: true })));
+    p.faceUp.forEach(c => cardsDiv.appendChild(makeSmallCardEl(c)));
     div.appendChild(cardsDiv);
 
-    // Hand count badge instead of individual face-down cards
     if (p.hand.length > 0) {
       const badge = document.createElement('div');
       badge.className = 'hand-count-badge';
-      badge.innerHTML = '&#127136; ' + p.hand.length + ' in hand';
+      badge.textContent = `${p.hand.length} in hand`;
       div.appendChild(badge);
-    } else if (p.faceDown.length === 0 && p.faceUp.length === 0) {
+    } else if (!p.faceDown.length && !p.faceUp.length) {
       const badge = document.createElement('div');
       badge.className = 'hand-count-badge empty';
       badge.textContent = 'No cards!';
@@ -1541,7 +1718,7 @@ function renderGame() {
     oppZone.appendChild(div);
   });
 
-  // Draw pile
+  // ── Draw pile ──
   const drawVis = document.getElementById('draw-pile-visual');
   drawVis.innerHTML = '';
   if (G.drawPile.length > 0) {
@@ -1558,17 +1735,16 @@ function renderGame() {
   }
   document.getElementById('deck-count').textContent = G.drawPile.length + ' left';
 
-  // Play pile — fanned so you can see slivers of each card
+  // ── Play pile fan ──
   const playVis = document.getElementById('play-pile-visual');
   playVis.innerHTML = '';
   if (G.playPile.length > 0) {
-    const SLIVER = 18;   // px exposed per buried card
-    const MAX_SHOW = 8;  // max cards visible in the fan
+    const SLIVER = 20;
+    const MAX_SHOW = 8;
     const pile = G.playPile;
-    // We show up to MAX_SHOW cards: all the tail ones as slivers, top card full
     const startIdx = Math.max(0, pile.length - MAX_SHOW);
-    const visible = pile.slice(startIdx); // oldest first in this slice
-    const fanHeight = (visible.length - 1) * SLIVER + 90;
+    const visible = pile.slice(startIdx);
+    const fanHeight = (visible.length - 1) * SLIVER + 96;
     const fan = document.createElement('div');
     fan.className = 'play-pile-fan';
     fan.style.height = fanHeight + 'px';
@@ -1578,18 +1754,24 @@ function renderGame() {
       card.style.top = (i * SLIVER) + 'px';
       card.style.zIndex = i + 1;
       if (!isTop) {
-        // Show just a sliver with the rank+suit visible
         card.classList.add('sliver');
-        const sliverLabel = document.createElement('span');
-        sliverLabel.className = 'sliver-label';
-        sliverLabel.innerHTML = `<span>${c.rank}</span><span>${c.suit}</span>`;
-        card.appendChild(sliverLabel);
+        // Sliver: show rank + suit centered in the exposed strip
+        const label = document.createElement('span');
+        label.className = 'sliver-label';
+        const rankSpan = document.createElement('span');
+        rankSpan.textContent = c.rank;
+        const suitSpan = document.createElement('span');
+        suitSpan.textContent = c.suit;
+        label.appendChild(rankSpan);
+        label.appendChild(suitSpan);
+        card.appendChild(label);
       }
       fan.appendChild(card);
     });
     playVis.appendChild(fan);
     const top = topCard(G.playPile);
-    document.getElementById('pile-top-label').textContent = `${top.rank}${top.suit} on top · ${G.playPile.length} card${G.playPile.length !== 1 ? 's' : ''}`;
+    document.getElementById('pile-top-label').textContent =
+      `${top.rank}${top.suit} on top · ${G.playPile.length} card${G.playPile.length !== 1 ? 's' : ''}`;
   } else {
     const empty = document.createElement('div');
     empty.className = 'discard-empty';
@@ -1598,36 +1780,26 @@ function renderGame() {
     document.getElementById('pile-top-label').textContent = 'Empty';
   }
 
-  // My name
+  // ── My area glow ──
   document.getElementById('my-name-label').textContent = me.name + ' (you)';
+  const myAreaEl = document.getElementById('my-area');
+  myAreaEl.classList.toggle('active-turn', isMyTurn && !G.mustPlayOnTwo);
+  myAreaEl.classList.toggle('must-play-two', isMyTurn && !!G.mustPlayOnTwo);
 
-  // My-turn glow on player area
-  const myAreaEl = document.querySelector('.my-area');
-  if (myAreaEl) {
-    myAreaEl.classList.toggle('active-turn', isMyTurn && !G.mustPlayOnTwo);
-    myAreaEl.classList.toggle('must-play-two', isMyTurn && !!G.mustPlayOnTwo);
-  }
-
-  // My face-down palace
   renderMyFaceDown(me);
-
-  // My face-up palace
   renderMyFaceUp(me);
-
-  // My hand
   renderMyHand(me);
 
   // Setup instructions
   const setupInstr = document.getElementById('setup-instructions');
   if (G.phase === 'setup' && !me.setupDone) {
     setupInstr.style.display = 'block';
-    const count = setupSelections.length;
-    setupInstr.textContent = `Select 3 cards from your hand to place face-up (${count}/3 selected)`;
+    setupInstr.textContent = `Select 3 cards from your hand to place face-up (${setupSelections.length}/3 selected)`;
   } else {
     setupInstr.style.display = 'none';
   }
 
-  // Action buttons
+  // ── Action buttons ──
   const playBtn = document.getElementById('btn-play');
   const pickupBtn = document.getElementById('btn-pickup');
 
@@ -1643,12 +1815,20 @@ function renderGame() {
       playBtn.textContent = 'Flip a Face-Down Card';
       playBtn.disabled = selectedCards.length !== 1;
     } else {
-      const btnLabel = G.mustPlayOnTwo ? 'Play on your 2' : (selectedCards.length ? `Play ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` : 'Select Cards to Play');
-      playBtn.textContent = btnLabel;
-      playBtn.disabled = selectedCards.length === 0 || !canPlay(selectedCards, G.playPile, G.mustPlayOnTwo);
+      const valid = selectedCards.length > 0 && canPlay(selectedCards, G.playPile, G.mustPlayOnTwo);
+      if (G.mustPlayOnTwo) {
+        playBtn.textContent = selectedCards.length ? `Play ${selectedCards.length} on your 2` : 'Play on your 2';
+      } else {
+        playBtn.textContent = selectedCards.length
+          ? `Play ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}`
+          : 'Select Cards to Play';
+      }
+      playBtn.disabled = !valid;
     }
     pickupBtn.disabled = G.playPile.length === 0 || !!G.mustPlayOnTwo;
-    pickupBtn.textContent = G.mustPlayOnTwo ? "Must play on your 2" : `Pick Up Pile (${G.playPile.length})`;
+    pickupBtn.textContent = G.mustPlayOnTwo
+      ? 'Must play on your 2'
+      : `Pick Up Pile (${G.playPile.length})`;
   } else {
     playBtn.disabled = true;
     playBtn.textContent = 'Play';
@@ -1664,11 +1844,9 @@ function renderMyFaceDown(me) {
     const slot = document.createElement('div');
     slot.className = 'palace-slot';
     const card = makeCardEl({ faceDown: true });
-    // If it's my turn and source is faceDown, make selectable
     if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'faceDown') {
       card.classList.add('selectable');
-      const isSelected = selectedCards.some(s => s.rank === c.rank && s.suit === c.suit);
-      if (isSelected) card.classList.add('selected');
+      if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
       card.onclick = () => toggleSelectFaceDown(c);
     }
     slot.appendChild(card);
@@ -1679,19 +1857,14 @@ function renderMyFaceDown(me) {
 function renderMyFaceUp(me) {
   const el = document.getElementById('my-palace-face-up');
   el.innerHTML = '';
-  if (G.phase === 'setup' && !me.setupDone) {
-    // Show hand cards for selection here actually — hand is rendered below, we highlight selected
-    return;
-  }
+  if (G.phase === 'setup' && !me.setupDone) return;
   me.faceUp.forEach(c => {
     const slot = document.createElement('div');
     slot.className = 'palace-slot';
     const card = makeCardEl(c);
-    // Selectable if my turn and hand is empty
     if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'faceUp') {
       card.classList.add('selectable');
-      const isSelected = selectedCards.some(s => s.rank === c.rank && s.suit === c.suit);
-      if (isSelected) card.classList.add('selected');
+      if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
       card.onclick = () => toggleSelect(c, 'faceUp');
     }
     slot.appendChild(card);
@@ -1704,26 +1877,23 @@ function renderMyHand(me) {
   el.innerHTML = '';
 
   if (G.phase === 'setup' && !me.setupDone) {
-    // 6 cards in hand, pick 3 for face-up
-    const sortedSetupHand = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
-    sortedSetupHand.forEach(c => {
+    const sorted = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
+    sorted.forEach(c => {
       const card = makeCardEl(c);
       card.classList.add('selectable');
-      const isSelected = setupSelections.some(s => s.rank === c.rank && s.suit === c.suit);
-      if (isSelected) card.classList.add('selected');
+      if (setupSelections.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
       card.onclick = () => toggleSetupSelect(c);
       el.appendChild(card);
     });
     return;
   }
 
-  const sortedHand = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
-  sortedHand.forEach(c => {
+  const sorted = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
+  sorted.forEach(c => {
     const card = makeCardEl(c);
     if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'hand') {
       card.classList.add('selectable');
-      const isSelected = selectedCards.some(s => s.rank === c.rank && s.suit === c.suit);
-      if (isSelected) card.classList.add('selected');
+      if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
       card.onclick = () => toggleSelect(c, 'hand');
     }
     el.appendChild(card);
@@ -1731,23 +1901,36 @@ function renderMyHand(me) {
 }
 
 // ═══════════════════════════════════════════════
-// CARD ELEMENT BUILDER
+// CARD ELEMENT BUILDERS
 // ═══════════════════════════════════════════════
 function makeCardEl(c) {
   const el = document.createElement('div');
   el.className = 'card';
-  if (c.faceDown) {
-    el.classList.add('face-down');
-    return el;
-  }
+  if (c.faceDown) { el.classList.add('face-down'); return el; }
   el.classList.add(isRed(c.suit) ? 'red' : 'black');
+  if (c.rank === '2') el.classList.add('special-2');
+  if (c.rank === '7') el.classList.add('special-7');
+  if (c.rank === '10') el.classList.add('special-10');
   el.innerHTML = `
     <div class="card-corner">
       <span>${c.rank}</span>
       <span class="suit-small">${c.suit}</span>
     </div>
     <span class="card-center-suit">${c.suit}</span>
+    <div class="card-corner-bottom">
+      <span>${c.rank}</span>
+      <span class="suit-small">${c.suit}</span>
+    </div>
   `;
+  return el;
+}
+
+function makeSmallCardEl(c) {
+  const el = document.createElement('div');
+  el.className = 'card-sm';
+  if (c.faceDown) { el.classList.add('face-down'); return el; }
+  el.classList.add(isRed(c.suit) ? 'red' : 'black');
+  el.innerHTML = `<span class="card-sm-rank">${c.rank}</span><span class="card-sm-suit">${c.suit}</span>`;
   return el;
 }
 
@@ -1759,7 +1942,6 @@ function toggleSelect(c, source) {
   if (idx >= 0) {
     selectedCards.splice(idx, 1);
   } else {
-    // Can only select same rank as already selected
     if (selectedCards.length > 0 && selectedCards[0].rank !== c.rank) {
       selectedCards = [c];
     } else {
@@ -1770,13 +1952,8 @@ function toggleSelect(c, source) {
 }
 
 function toggleSelectFaceDown(c) {
-  // For face-down, only select one at a time
   const idx = selectedCards.findIndex(s => s.rank === c.rank && s.suit === c.suit);
-  if (idx >= 0) {
-    selectedCards = [];
-  } else {
-    selectedCards = [c];
-  }
+  selectedCards = idx >= 0 ? [] : [c];
   renderGame();
 }
 
@@ -1804,9 +1981,8 @@ document.getElementById('btn-play').onclick = () => {
   if (G.phase === 'play') {
     const me = G.players[myPlayerIndex];
     const source = getPlayableSource(me);
-    if (source === 'faceDown' && selectedCards.length === 1) {
-      sendToHost({ type: 'play', cards: selectedCards });
-    } else if (selectedCards.length > 0) {
+    if ((source === 'faceDown' && selectedCards.length === 1) ||
+        (source !== 'faceDown' && selectedCards.length > 0)) {
       sendToHost({ type: 'play', cards: selectedCards });
     }
     selectedCards = [];
@@ -1831,40 +2007,32 @@ function toast(msg, style = '') {
   setTimeout(() => el.remove(), 3200);
 }
 
-function showLobbyError(msg) {
-  document.getElementById('lobby-error').textContent = msg;
-}
-
-function clearLobbyError() {
-  document.getElementById('lobby-error').textContent = '';
-}
+function showLobbyError(msg) { document.getElementById('lobby-error').textContent = msg; }
+function clearLobbyError() { document.getElementById('lobby-error').textContent = ''; }
 
 function showWinnerModal(winnerIdx) {
   if (!G) return;
   const modal = document.getElementById('winner-modal');
-  if (modal.style.display === 'flex') return; // already shown
+  if (modal.style.display === 'flex') return;
   modal.style.display = 'flex';
   const winner = G.players[winnerIdx];
-  document.getElementById('winner-title').textContent = winnerIdx === myPlayerIndex ? '🏆 You Win!' : `${winner.name} Wins!`;
+  document.getElementById('winner-title').textContent =
+    winnerIdx === myPlayerIndex ? '🏆 You Win!' : `${winner.name} Wins!`;
   document.getElementById('winner-msg').textContent = winnerIdx === myPlayerIndex
     ? 'Congratulations! You cleared all your cards first.'
-    : `${winner.name} was the first to empty all their cards.`;
+    : `${winner.name} emptied all their cards first.`;
 }
 
-// Rules
 document.getElementById('btn-rules').onclick = () => {
   document.getElementById('rules-modal').style.display = 'flex';
 };
 
-// Enter key for lobby inputs
 document.getElementById('player-name').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('btn-host').click();
 });
 document.getElementById('room-code-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') document.getElementById('btn-join').click();
 });
-
-// Auto-uppercase room code input
 document.getElementById('room-code-input').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase();
 });
