@@ -310,7 +310,7 @@
   /* Table center */
   .table-center {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: 40px;
     padding: 20px 0;
@@ -440,20 +440,53 @@
     font-size: 26px;
   }
 
+  /* Draw pile stacked offset */
   .card-pile-stack {
     position: relative;
     width: 64px;
     height: 90px;
   }
-
   .card-pile-stack .card {
     position: absolute;
     top: 0;
     left: 0;
   }
-
   .card-pile-stack .card:nth-child(2) { transform: translate(2px, -2px); }
   .card-pile-stack .card:nth-child(3) { transform: translate(4px, -4px); }
+
+  /* Play pile: vertical fan showing a sliver of each card */
+  .play-pile-fan {
+    position: relative;
+    width: 64px;
+    /* height set dynamically via JS */
+  }
+  .play-pile-fan .card {
+    position: absolute;
+    left: 0;
+    width: 64px;
+    height: 90px;
+    /* top set per card by JS */
+  }
+  /* Sliver label shown on buried cards */
+  .card .sliver-label {
+    display: none;
+  }
+  .card.sliver .sliver-label {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    position: absolute;
+    top: 50%;
+    left: 7px;
+    transform: translateY(-50%);
+    font-size: 13px;
+    font-weight: 700;
+    pointer-events: none;
+  }
+  .card.sliver .card-corner,
+  .card.sliver .card-center-suit {
+    display: none;
+  }
 
   .hand-cards {
     display: flex;
@@ -683,6 +716,45 @@
     min-height: 16px;
   }
 
+  /* Hand count badge for opponents */
+  .hand-count-badge {
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--ivory-shadow);
+    background: rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 3px 10px;
+    margin-top: 4px;
+  }
+  .hand-count-badge.empty {
+    color: var(--highlight);
+    border-color: rgba(78,207,128,0.3);
+  }
+
+  /* My-turn pulsing glow on the my-area panel */
+  .my-area {
+    border-radius: 12px;
+    transition: box-shadow 0.4s, border-color 0.4s;
+  }
+  .my-area.active-turn {
+    box-shadow: 0 0 0 2px var(--amber), 0 0 28px rgba(232,160,32,0.25);
+    border-color: var(--amber) !important;
+  }
+  .my-area.must-play-two {
+    box-shadow: 0 0 0 2px var(--highlight), 0 0 28px rgba(78,207,128,0.25);
+    border-color: var(--highlight) !important;
+  }
+
+  /* Pulsing animation for turn arrow in header */
+  @keyframes turnPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(232,160,32,0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(232,160,32,0); }
+  }
+  .turn-indicator.my-turn {
+    animation: turnPulse 1.4s ease infinite;
+  }
+
   .connection-status {
     font-size: 10px;
     letter-spacing: 0.1em;
@@ -872,11 +944,13 @@ function effectiveTop(pile) {
   return null;
 }
 
-function canPlay(cards, pile) {
+function canPlay(cards, pile, mustPlayOnTwo) {
   if (!cards.length) return false;
   const rank = cards[0].rank;
   // All selected cards must be same rank
   if (!cards.every(c => c.rank === rank)) return false;
+  // When a 2 was just played, the same player must play again — any card is valid on top of it
+  if (mustPlayOnTwo) return true;
   // 2 and 10 can always be played
   if (rank === '2' || rank === '10') return true;
   const top = effectiveTop(pile);
@@ -1263,7 +1337,7 @@ function processAction(fromPeerId, action) {
       const poolKeys = poolCards.map(cardKey);
       if (!cards.every(c => poolKeys.includes(cardKey(c)))) return;
       // Check playability
-      if (!canPlay(cards, G.playPile)) return;
+      if (!canPlay(cards, G.playPile, G.mustPlayOnTwo)) return;
       // Remove from pool
       const playedKeys = cards.map(cardKey);
       if (source === 'hand') {
@@ -1282,6 +1356,7 @@ function processAction(fromPeerId, action) {
     // Pick up pile
     player.hand = player.hand.concat(G.playPile);
     G.playPile = [];
+    G.mustPlayOnTwo = false;
     broadcastToast(`${player.name} picked up the pile.`, 'bad');
     advanceTurn(pi, false);
     broadcastState();
@@ -1317,12 +1392,21 @@ function afterPlay(pi, cards) {
     return;
   }
 
-  // 7: next player must play 7 or lower (stored in pile)
-  // (this is handled naturally by effectiveTop in canPlay)
+  // 7: next player must play 7 or lower — handled naturally by effectiveTop in canPlay
 
-  // 2: must play something on top of it next turn (same player or next?)
-  // House rule: 2 is wildcard, can be played on anything, then NEXT player must play on top of it
-  // So turn advances normally and next player is forced
+  // 2 house rule: wildcard, but the SAME player who played it must immediately play another card on top.
+  // Keep currentPlayer the same; set a flag so the UI shows the constraint.
+  if (rank === '2') {
+    refillHand(player);
+    G.mustPlayOnTwo = true;
+    broadcastToast(`${player.name} played a 2 — must play again on top of it!`, 'special');
+    checkWin(pi);
+    broadcastState();
+    return;
+  }
+
+  // Clear the two-play flag once any non-2 card is played
+  G.mustPlayOnTwo = false;
 
   refillHand(player);
   advanceTurn(pi, true);
@@ -1408,7 +1492,11 @@ function renderGame() {
     showWinnerModal(G.winner);
   } else {
     const cur = G.players[G.currentPlayer];
-    turnEl.textContent = isMyTurn ? 'Your Turn ▶' : `${cur.name}'s Turn`;
+    if (isMyTurn && G.mustPlayOnTwo) {
+      turnEl.textContent = 'Play on your 2 ▶';
+    } else {
+      turnEl.textContent = isMyTurn ? 'Your Turn ▶' : `${cur.name}'s Turn`;
+    }
     turnEl.classList.toggle('my-turn', isMyTurn);
   }
 
@@ -1425,22 +1513,31 @@ function renderGame() {
     const cardsDiv = document.createElement('div');
     cardsDiv.className = 'opponent-cards';
 
-    // Face-down cards
+    // Face-down palace cards
     p.faceDown.forEach(() => {
       cardsDiv.appendChild(makeCardEl({ faceDown: true }));
     });
 
-    // Face-up cards
+    // Face-up palace cards
     p.faceUp.forEach(c => {
       cardsDiv.appendChild(makeCardEl(c));
     });
 
-    // Hand cards (face down)
-    for (let h = 0; h < p.hand.length; h++) {
-      cardsDiv.appendChild(makeCardEl({ faceDown: true }));
+    div.appendChild(cardsDiv);
+
+    // Hand count badge instead of individual face-down cards
+    if (p.hand.length > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'hand-count-badge';
+      badge.innerHTML = '&#127136; ' + p.hand.length + ' in hand';
+      div.appendChild(badge);
+    } else if (p.faceDown.length === 0 && p.faceUp.length === 0) {
+      const badge = document.createElement('div');
+      badge.className = 'hand-count-badge empty';
+      badge.textContent = 'No cards!';
+      div.appendChild(badge);
     }
 
-    div.appendChild(cardsDiv);
     oppZone.appendChild(div);
   });
 
@@ -1461,17 +1558,38 @@ function renderGame() {
   }
   document.getElementById('deck-count').textContent = G.drawPile.length + ' left';
 
-  // Play pile
+  // Play pile — fanned so you can see slivers of each card
   const playVis = document.getElementById('play-pile-visual');
   playVis.innerHTML = '';
   if (G.playPile.length > 0) {
-    const stack = document.createElement('div');
-    stack.className = 'card-pile-stack';
-    const cards = G.playPile.slice(-3);
-    cards.forEach(c => stack.appendChild(makeCardEl(c)));
-    playVis.appendChild(stack);
+    const SLIVER = 18;   // px exposed per buried card
+    const MAX_SHOW = 8;  // max cards visible in the fan
+    const pile = G.playPile;
+    // We show up to MAX_SHOW cards: all the tail ones as slivers, top card full
+    const startIdx = Math.max(0, pile.length - MAX_SHOW);
+    const visible = pile.slice(startIdx); // oldest first in this slice
+    const fanHeight = (visible.length - 1) * SLIVER + 90;
+    const fan = document.createElement('div');
+    fan.className = 'play-pile-fan';
+    fan.style.height = fanHeight + 'px';
+    visible.forEach((c, i) => {
+      const isTop = i === visible.length - 1;
+      const card = makeCardEl(c);
+      card.style.top = (i * SLIVER) + 'px';
+      card.style.zIndex = i + 1;
+      if (!isTop) {
+        // Show just a sliver with the rank+suit visible
+        card.classList.add('sliver');
+        const sliverLabel = document.createElement('span');
+        sliverLabel.className = 'sliver-label';
+        sliverLabel.innerHTML = `<span>${c.rank}</span><span>${c.suit}</span>`;
+        card.appendChild(sliverLabel);
+      }
+      fan.appendChild(card);
+    });
+    playVis.appendChild(fan);
     const top = topCard(G.playPile);
-    document.getElementById('pile-top-label').textContent = `${top.rank}${top.suit} on top (${G.playPile.length})`;
+    document.getElementById('pile-top-label').textContent = `${top.rank}${top.suit} on top · ${G.playPile.length} card${G.playPile.length !== 1 ? 's' : ''}`;
   } else {
     const empty = document.createElement('div');
     empty.className = 'discard-empty';
@@ -1482,6 +1600,13 @@ function renderGame() {
 
   // My name
   document.getElementById('my-name-label').textContent = me.name + ' (you)';
+
+  // My-turn glow on player area
+  const myAreaEl = document.querySelector('.my-area');
+  if (myAreaEl) {
+    myAreaEl.classList.toggle('active-turn', isMyTurn && !G.mustPlayOnTwo);
+    myAreaEl.classList.toggle('must-play-two', isMyTurn && !!G.mustPlayOnTwo);
+  }
 
   // My face-down palace
   renderMyFaceDown(me);
@@ -1518,11 +1643,12 @@ function renderGame() {
       playBtn.textContent = 'Flip a Face-Down Card';
       playBtn.disabled = selectedCards.length !== 1;
     } else {
-      playBtn.textContent = selectedCards.length ? `Play ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` : 'Select Cards to Play';
-      playBtn.disabled = selectedCards.length === 0 || !canPlay(selectedCards, G.playPile);
+      const btnLabel = G.mustPlayOnTwo ? 'Play on your 2' : (selectedCards.length ? `Play ${selectedCards.length} Card${selectedCards.length > 1 ? 's' : ''}` : 'Select Cards to Play');
+      playBtn.textContent = btnLabel;
+      playBtn.disabled = selectedCards.length === 0 || !canPlay(selectedCards, G.playPile, G.mustPlayOnTwo);
     }
-    pickupBtn.disabled = G.playPile.length === 0;
-    pickupBtn.textContent = `Pick Up Pile (${G.playPile.length})`;
+    pickupBtn.disabled = G.playPile.length === 0 || !!G.mustPlayOnTwo;
+    pickupBtn.textContent = G.mustPlayOnTwo ? "Must play on your 2" : `Pick Up Pile (${G.playPile.length})`;
   } else {
     playBtn.disabled = true;
     playBtn.textContent = 'Play';
@@ -1579,7 +1705,8 @@ function renderMyHand(me) {
 
   if (G.phase === 'setup' && !me.setupDone) {
     // 6 cards in hand, pick 3 for face-up
-    me.hand.forEach(c => {
+    const sortedSetupHand = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
+    sortedSetupHand.forEach(c => {
       const card = makeCardEl(c);
       card.classList.add('selectable');
       const isSelected = setupSelections.some(s => s.rank === c.rank && s.suit === c.suit);
@@ -1590,7 +1717,8 @@ function renderMyHand(me) {
     return;
   }
 
-  me.hand.forEach(c => {
+  const sortedHand = [...me.hand].sort((a, b) => cardValue(a.rank) - cardValue(b.rank));
+  sortedHand.forEach(c => {
     const card = makeCardEl(c);
     if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'hand') {
       card.classList.add('selectable');
