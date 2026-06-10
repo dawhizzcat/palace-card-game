@@ -93,16 +93,17 @@ function activePlayerCount() {
 // seat: 0-based index left→right; n: total opponents. Returns {left, top} in %.
 // Opponents span the upper arc (avoiding the bottom, which is reserved for you).
 function seatPosition(seat, n) {
-  const PHI_MIN = Math.PI * 0.16;   // left edge of the arc
-  const PHI_MAX = Math.PI * 0.84;   // right edge of the arc
-  const RX = 47, RY = 44;           // horizontal / vertical radius (% of table)
-  const CY = 46;                    // vertical centre of the arc band (%)
+  const PHI_MIN = Math.PI * 0.20;   // left edge (~36° from horizontal)
+  const PHI_MAX = Math.PI * 0.80;   // right edge (~144° from horizontal)
+  const RX = 40;                    // horizontal radius (% of table width)
+  const RY = 28;                    // vertical radius — kept small so top stays in-table
+  const CY = 38;                    // arc centre Y (% from table top)
   const phi = n === 1
     ? Math.PI / 2
     : PHI_MIN + (PHI_MAX - PHI_MIN) * (seat / (n - 1));
   return {
     left: 50 - RX * Math.cos(phi),
-    top: CY - RY * Math.sin(phi),
+    top:  CY - RY * Math.sin(phi),
   };
 }
 
@@ -734,9 +735,26 @@ function renderGame() {
     div.appendChild(nameEl);
 
     const cardsDiv = document.createElement('div');
-    cardsDiv.className = 'opponent-cards';
-    p.faceDown.forEach(() => cardsDiv.appendChild(makeSmallCardEl({ faceDown: true })));
-    p.faceUp.forEach(c => cardsDiv.appendChild(makeSmallCardEl(c)));
+    cardsDiv.className = 'opponent-palace';
+    // Row 1: face-down cards (backs)
+    const fdRow = document.createElement('div');
+    fdRow.className = 'opponent-palace-row';
+    const maxSlots = Math.max(p.faceDown.length, p.faceUp.length, 1);
+    for (let s = 0; s < maxSlots; s++) {
+      fdRow.appendChild(s < p.faceDown.length
+        ? makeSmallCardEl({ faceDown: true })
+        : document.createElement('div')); // empty placeholder keeps grid aligned
+    }
+    // Row 2: face-up cards
+    const fuRow = document.createElement('div');
+    fuRow.className = 'opponent-palace-row';
+    for (let s = 0; s < maxSlots; s++) {
+      fuRow.appendChild(s < p.faceUp.length
+        ? makeSmallCardEl(p.faceUp[s])
+        : document.createElement('div'));
+    }
+    cardsDiv.appendChild(fdRow);
+    cardsDiv.appendChild(fuRow);
     div.appendChild(cardsDiv);
 
     if (p.hand.length > 0) {
