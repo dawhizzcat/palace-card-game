@@ -337,10 +337,10 @@ body {
     z-index: 2;
   }
 
-  /* Piles centred on the felt — slightly below centre to balance against opponents above */
+  /* Piles centred horizontally; JS sets the top dynamically */
   .felt-table .table-center {
     position: absolute;
-    top: 52%; left: 50%;
+    left: 50%;
     transform: translate(-50%, -50%);
     gap: 18px;
     padding: 0;

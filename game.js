@@ -89,32 +89,43 @@ function activePlayerCount() {
   return G.players.filter(p => !p.disconnected).length;
 }
 
-// Seat an opponent around the top arc of the oval table.
-// Returns CSS values for left/top that guarantee the card stays fully inside
-// the felt-table, accounting for the card's own dimensions via a min-top clamp.
-function seatPosition(seat, n, tableW, tableH, cardW, cardH) {
+// Layout the opponents on the felt arc and return the piles Y coordinate,
+// so opponents and piles always maintain a consistent gap at every screen size.
+//
+// Returns { seats: [{left, top}], pilesTop } — all in px from felt-table top-left.
+// seatCentre is the card-centre pixel position; pilesTop is piles centre Y.
+function layoutFelt(n, tableW, tableH, areaW, areaH, pileH) {
   const PHI_MIN = Math.PI * 0.18;
   const PHI_MAX = Math.PI * 0.82;
-  const RX = 0.40 * tableW;   // horizontal radius in px
-  const RY = 0.28 * tableH;   // vertical radius in px
+  const RX = 0.40 * tableW;
+  // RY scales so the arc spread uses at most the top ~35% of the table
+  const RY = Math.min(0.22 * tableH, 160);
   const CX = tableW / 2;
-  const CY = 0.42 * tableH;   // arc centre Y in px from felt-table top
+  // Arc centre Y: place it so opponents cluster in the top third
+  const CY = areaH / 2 + 12; // seats anchored 12px below felt top (after clamping)
 
-  const phi = n === 1
-    ? Math.PI / 2
-    : PHI_MIN + (PHI_MAX - PHI_MIN) * (seat / (n - 1));
+  const MARGIN = 8;
+  const halfW = areaW / 2, halfH = areaH / 2;
+  const GAP_OPP_PILES = 40; // fixed gap in px between opp bottom and piles centre
 
-  // Centre of the opponent card in px from felt-table top-left
-  let cx = CX - RX * Math.cos(phi);
-  let cy = CY - RY * Math.sin(phi);
+  const seats = [];
+  let maxOppBottom = 0;
 
-  // Clamp so the card never bleeds outside the felt-table
-  const MARGIN = 8; // px buffer from felt edges
-  const halfW = cardW / 2, halfH = cardH / 2;
-  cx = Math.max(halfW + MARGIN, Math.min(tableW - halfW - MARGIN, cx));
-  cy = Math.max(halfH + MARGIN, Math.min(tableH - halfH - MARGIN, cy));
+  for (let i = 0; i < n; i++) {
+    const phi = n === 1 ? Math.PI / 2 : PHI_MIN + (PHI_MAX - PHI_MIN) * (i / (n - 1));
+    let cx = CX - RX * Math.cos(phi);
+    let cy = CY + (n === 1 ? 0 : RY * (1 - Math.sin(phi)) * 0.5);
+    // Clamp inside felt
+    cx = Math.max(halfW + MARGIN, Math.min(tableW - halfW - MARGIN, cx));
+    cy = Math.max(halfH + MARGIN, Math.min(tableH * 0.55 - halfH, cy));
+    seats.push({ left: cx, top: cy });
+    maxOppBottom = Math.max(maxOppBottom, cy + halfH);
+  }
 
-  return { left: cx, top: cy }; // px from felt-table top-left (card is centred here)
+  // Piles sit a fixed gap below the lowest opponent card
+  const pilesTop = Math.min(maxOppBottom + GAP_OPP_PILES + pileH / 2, tableH * 0.65);
+
+  return { seats, pilesTop };
 }
 
 // ═══════════════════════════════════════════════
@@ -720,7 +731,7 @@ function renderGame() {
   // ── Opponents ──
   const oppZone = document.getElementById('opponents-zone');
   oppZone.innerHTML = '';
-  oppZone._tableRect = null; // clear so it re-measures after resize
+  oppZone._layout = null; // clear so it re-measures after resize
   const total = G.players.length;
   const nOpp = total - 1;
   const circular = window.innerWidth >= 768 && nOpp > 0;
@@ -780,24 +791,26 @@ function renderGame() {
 
     // On desktop, seat opponents around the top arc of the oval table.
     if (circular) {
-      // Measure the felt-table and a representative opponent card size.
-      // We do this once and reuse for all seats this render pass.
-      if (!oppZone._tableRect) {
+      if (!oppZone._layout) {
         const ft = document.querySelector('.felt-table');
-        oppZone._tableRect = ft ? ft.getBoundingClientRect() : { width: 1440, height: 640 };
+        const tr = ft ? ft.getBoundingClientRect() : { width: 1440, height: 640 };
+        const cs = getComputedStyle(document.documentElement);
+        const smW = parseFloat(cs.getPropertyValue('--card-sm-w')) || 44;
+        const smH = parseFloat(cs.getPropertyValue('--card-sm-h')) || 62;
+        const cardW = parseFloat(cs.getPropertyValue('--card-w')) || 68;
+        const cardH = parseFloat(cs.getPropertyValue('--card-h')) || 96;
+        const areaW = smW * 3 + 8 * 2 + 24;
+        const areaH = smH * 2 + 8 + 16 + 24 + 20;
+        const pileH = cardH + 32; // card + label
+        oppZone._layout = layoutFelt(nOpp, tr.width, tr.height, areaW, areaH, pileH);
+        // Apply piles position now (table-center is already in DOM)
+        const tc = document.querySelector('.felt-table .table-center');
+        if (tc) tc.style.top = oppZone._layout.pilesTop + 'px';
       }
-      const tr = oppZone._tableRect;
-      // Estimate opponent card dimensions from CSS variables
-      const smW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-sm-w')) || 44;
-      const smH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-sm-h')) || 62;
-      // Opponent area is ~3 cards wide + gap, 2 rows + name + badge
-      const areaW = smW * 3 + 8 * 2 + 24;  // 3 cards + gaps + padding
-      const areaH = smH * 2 + 8 + 16 + 24 + 20; // 2 rows + gaps + name + badge + padding
-
-      const { left, top } = seatPosition(seat, nOpp, tr.width, tr.height, areaW, areaH);
+      const pos = oppZone._layout.seats[seat];
       div.style.position = 'absolute';
-      div.style.left = left + 'px';
-      div.style.top  = top  + 'px';
+      div.style.left = pos.left + 'px';
+      div.style.top  = pos.top  + 'px';
       div.style.transform = 'translate(-50%, -50%)';
     }
     seat++;
