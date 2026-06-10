@@ -1184,8 +1184,7 @@ function startGame() {
 
   // Host's index
   myPlayerIndex = G.players.findIndex(p => p.peerId === myPeerId);
-  broadcastState();
-  showGame();
+  broadcastState(); // applyState inside this will call showGame for host too
 }
 
 // ═══════════════════════════════════════════════
@@ -1380,22 +1379,19 @@ function applyState(state) {
   if (myPlayerIndex < 0) {
     myPlayerIndex = G.players.findIndex(p => p.peerId === myPeerId);
   }
-  renderGame();
+  // Always ensure the game panel is visible before rendering
+  showGame();
 }
 
 function showGame() {
   document.getElementById('waiting-room').style.display = 'none';
   document.getElementById('lobby').style.display = 'none';
   document.getElementById('game').style.display = 'flex';
-  renderGame();
+  if (G) renderGame();
 }
 
 function renderGame() {
   if (!G) return;
-  if (document.getElementById('game').style.display === 'none') {
-    showGame();
-    return;
-  }
 
   const me = G.players[myPlayerIndex];
   if (!me) return;
