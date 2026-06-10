@@ -71,31 +71,40 @@
   </div>
   <div class="game-body">
     <div id="disconnect-banner" style="display:none"></div>
-    <div class="opponents-zone" id="opponents-zone"></div>
-    <div class="table-center">
-      <div class="pile-area">
-        <span class="pile-label">Draw</span>
-        <div style="position:relative; margin-bottom:24px;">
-          <div id="draw-pile-visual"></div>
-          <span class="deck-badge" id="deck-count">0 cards</span>
+
+    <!-- felt-table: the oval table. On desktop, opponents are seated around
+         the top arc and the piles sit in the centre. On mobile it collapses
+         to a simple vertical stack. -->
+    <div class="felt-table">
+      <div class="felt-ellipse"></div>
+      <div class="opponents-zone" id="opponents-zone"></div>
+      <div class="table-center">
+        <div class="pile-area">
+          <span class="pile-label">Draw</span>
+          <div style="position:relative; margin-bottom:24px;">
+            <div id="draw-pile-visual"></div>
+            <span class="deck-badge" id="deck-count">0 cards</span>
+          </div>
+        </div>
+        <div class="pile-area">
+          <span class="pile-label">Play Pile</span>
+          <div id="play-pile-visual"></div>
+          <span class="pile-count" id="pile-top-label"></span>
+        </div>
+        <div class="pile-area">
+          <span class="pile-label">Discard</span>
+          <div id="discard-pile-visual"></div>
+          <span class="pile-count" id="discard-top-label"></span>
         </div>
       </div>
-      <div class="pile-area">
-        <span class="pile-label">Play Pile</span>
-        <div id="play-pile-visual"></div>
-        <span class="pile-count" id="pile-top-label"></span>
-      </div>
-      <div class="pile-area">
-        <span class="pile-label">Discard</span>
-        <div id="discard-pile-visual"></div>
-        <span class="pile-count" id="discard-top-label"></span>
-      </div>
     </div>
+
     <div class="my-area" id="my-area">
       <span class="my-name" id="my-name-label">You</span>
-      <div class="palace-row" id="my-palace-face-down"></div>
-      <div class="palace-row" id="my-palace-face-up"></div>
-      <div class="hand-cards" id="my-hand"></div>
+      <div class="my-cards-row">
+        <div class="palace-row" id="my-palace"></div>
+        <div class="hand-cards" id="my-hand"></div>
+      </div>
       <div class="setup-instructions" id="setup-instructions" style="display:none"></div>
       <div class="action-bar">
         <button class="btn-play" id="btn-play" disabled>Play Selected</button>

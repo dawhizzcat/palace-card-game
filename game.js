@@ -89,6 +89,23 @@ function activePlayerCount() {
   return G.players.filter(p => !p.disconnected).length;
 }
 
+// Seat an opponent around the top arc of the oval table.
+// seat: 0-based index left→right; n: total opponents. Returns {left, top} in %.
+// Opponents span the upper arc (avoiding the bottom, which is reserved for you).
+function seatPosition(seat, n) {
+  const PHI_MIN = Math.PI * 0.16;   // left edge of the arc
+  const PHI_MAX = Math.PI * 0.84;   // right edge of the arc
+  const RX = 47, RY = 44;           // horizontal / vertical radius (% of table)
+  const CY = 46;                    // vertical centre of the arc band (%)
+  const phi = n === 1
+    ? Math.PI / 2
+    : PHI_MIN + (PHI_MAX - PHI_MIN) * (seat / (n - 1));
+  return {
+    left: 50 - RX * Math.cos(phi),
+    top: CY - RY * Math.sin(phi),
+  };
+}
+
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
@@ -402,27 +419,44 @@ function startGame() {
   broadcastState();
 }
 
-// ── Find who starts: player with 3♠ first, else lowest 3 ──
+// Does any active player hold a 3 in hand? (the opening move always
+// comes from the hand, since every player has a full hand at game start)
+function anyThreeInHands() {
+  return G.players.some(p => !p.disconnected && p.hand.some(c => c.rank === '3'));
+}
+
+// ── Find who starts ──
+// Priority: the holder of 3♠, then the lowest 3 by suit, then — if no 3
+// exists anywhere — the holder of the single lowest card overall.
+// Only HANDS are considered: at the start of play every active player has
+// a full hand, so the opening card is always played from hand.
 function findOpeningPlayer() {
-  // Check hand + faceUp cards for each player
+  // 1. Holder of the 3♠
   for (const player of G.players) {
     if (player.disconnected) continue;
-    const allCards = [...player.hand, ...player.faceUp];
-    if (allCards.some(c => c.rank === '3' && c.suit === '♠')) {
-      return player.index;
-    }
+    if (player.hand.some(c => c.rank === '3' && c.suit === '♠')) return player.index;
   }
-  // Fallback: any 3, prioritised by suit order ♠♥♦♣
+  // 2. Holder of any 3, by suit order ♠♥♦♣
   for (const suit of ['♠','♥','♦','♣']) {
     for (const player of G.players) {
       if (player.disconnected) continue;
-      const allCards = [...player.hand, ...player.faceUp];
-      if (allCards.some(c => c.rank === '3' && c.suit === suit)) {
-        return player.index;
+      if (player.hand.some(c => c.rank === '3' && c.suit === suit)) return player.index;
+    }
+  }
+  // 3. No 3 anywhere — holder of the lowest card overall (rank, then suit)
+  let bestIdx = -1, bestVal = Infinity, bestSuit = 99;
+  for (const player of G.players) {
+    if (player.disconnected) continue;
+    for (const c of player.hand) {
+      const v = cardValue(c.rank);
+      const s = SUIT_ORDER[c.suit];
+      if (v < bestVal || (v === bestVal && s < bestSuit)) {
+        bestVal = v; bestSuit = s; bestIdx = player.index;
       }
     }
   }
-  // Edge case: no 3s visible (all in faceDown) — just start with player 0
+  if (bestIdx >= 0) return bestIdx;
+  // Absolute fallback (no active player has any hand card — shouldn't happen)
   return G.players.findIndex(p => !p.disconnected);
 }
 
@@ -430,9 +464,17 @@ function startPlayPhase() {
   G.phase = 'play';
   G.openingPlayer = findOpeningPlayer();
   G.currentPlayer = G.openingPlayer;
-  G.mustPlayThree = true;
+  // Only force a 3 if a 3 actually exists in someone's hand. Otherwise the
+  // opener simply plays the lowest card (any card is legal on an empty pile).
+  const hasThree = anyThreeInHands();
+  G.mustPlayThree = hasThree;
   const starter = G.players[G.openingPlayer];
-  broadcastToast(`Game on! ${starter.name} opens with a 3.`, 'good');
+  broadcastToast(
+    hasThree
+      ? `Game on! ${starter.name} opens with a 3.`
+      : `Game on! ${starter.name} opens with the lowest card.`,
+    'good'
+  );
 }
 
 // ═══════════════════════════════════════════════
@@ -670,6 +712,9 @@ function renderGame() {
   const oppZone = document.getElementById('opponents-zone');
   oppZone.innerHTML = '';
   const total = G.players.length;
+  const nOpp = total - 1;
+  const circular = window.innerWidth >= 768 && nOpp > 0;
+  let seat = 0;
   for (let offset = 1; offset < total; offset++) {
     const i = (myPlayerIndex + offset) % total;
     const p = G.players[i];
@@ -705,6 +750,16 @@ function renderGame() {
       badge.textContent = 'No cards!';
       div.appendChild(badge);
     }
+
+    // On desktop, seat opponents around the top arc of the oval table.
+    if (circular) {
+      const { left, top } = seatPosition(seat, nOpp);
+      div.style.position = 'absolute';
+      div.style.left = left + '%';
+      div.style.top = top + '%';
+      div.style.transform = 'translate(-50%, -50%)';
+    }
+    seat++;
     oppZone.appendChild(div);
   }
 
@@ -737,8 +792,7 @@ function renderGame() {
   else if (isMyTurn && G.mustPlayThree) myAreaEl.classList.add('must-play-3-border');
   else if (isMyTurn) myAreaEl.classList.add('active-turn');
 
-  renderMyFaceDown(me);
-  renderMyFaceUp(me);
+  renderMyPalace(me);
   renderMyHand(me);
 
   const setupInstr = document.getElementById('setup-instructions');
@@ -841,39 +895,47 @@ function renderPileSpread(containerId, pile, labelId) {
   }
 }
 
-function renderMyFaceDown(me) {
-  const el = document.getElementById('my-palace-face-down');
+// Render the palace as up to 3 stacked slots: each slot shows a face-down
+// back, with the corresponding face-up card laid on top (once setup is done).
+function renderMyPalace(me) {
+  const el = document.getElementById('my-palace');
   el.innerHTML = '';
-  me.faceDown.forEach((c) => {
-    const slot = document.createElement('div');
-    slot.className = 'palace-slot';
-    const card = makeCardEl({ faceDown: true });
-    if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'faceDown') {
-      card.classList.add('selectable');
-      if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
-      card.onclick = () => toggleSelectFaceDown(c);
-    }
-    slot.appendChild(card);
-    el.appendChild(slot);
-  });
-}
+  const showFaceUp = !(G.phase === 'setup' && !me.setupDone);
+  const isMyPlayTurn = G.phase === 'play' && G.currentPlayer === myPlayerIndex;
+  const source = getPlayableSource(me);
+  const slots = Math.max(me.faceDown.length, showFaceUp ? me.faceUp.length : 0);
 
-function renderMyFaceUp(me) {
-  const el = document.getElementById('my-palace-face-up');
-  el.innerHTML = '';
-  if (G.phase === 'setup' && !me.setupDone) return;
-  me.faceUp.forEach(c => {
+  for (let j = 0; j < slots; j++) {
     const slot = document.createElement('div');
     slot.className = 'palace-slot';
-    const card = makeCardEl(c);
-    if (G.phase === 'play' && G.currentPlayer === myPlayerIndex && getPlayableSource(me) === 'faceUp') {
-      card.classList.add('selectable');
-      if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
-      card.onclick = () => toggleSelectFaceUp(c);
+
+    // Face-down back (the hidden card)
+    if (j < me.faceDown.length) {
+      const fd = me.faceDown[j];
+      const back = makeCardEl({ faceDown: true });
+      if (isMyPlayTurn && source === 'faceDown') {
+        back.classList.add('selectable');
+        if (selectedCards.some(s => s.rank === fd.rank && s.suit === fd.suit)) back.classList.add('selected');
+        back.onclick = () => toggleSelectFaceDown(fd);
+      }
+      slot.appendChild(back);
     }
-    slot.appendChild(card);
+
+    // Face-up card on top
+    if (showFaceUp && j < me.faceUp.length) {
+      const c = me.faceUp[j];
+      const card = makeCardEl(c);
+      card.classList.add('palace-faceup');
+      if (isMyPlayTurn && source === 'faceUp') {
+        card.classList.add('selectable');
+        if (selectedCards.some(s => s.rank === c.rank && s.suit === c.suit)) card.classList.add('selected');
+        card.onclick = () => toggleSelectFaceUp(c);
+      }
+      slot.appendChild(card);
+    }
+
     el.appendChild(slot);
-  });
+  }
 }
 
 function renderMyHand(me) {
@@ -1058,4 +1120,12 @@ document.getElementById('room-code-input').addEventListener('keydown', e => {
 });
 document.getElementById('room-code-input').addEventListener('input', e => {
   e.target.value = e.target.value.toUpperCase();
+});
+
+// Re-render on resize so the oval seating recalculates when crossing the
+// mobile/desktop breakpoint or when the window changes size.
+let _resizeRAF = 0;
+window.addEventListener('resize', () => {
+  cancelAnimationFrame(_resizeRAF);
+  _resizeRAF = requestAnimationFrame(() => { if (G) renderGame(); });
 });
