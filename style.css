@@ -18,6 +18,7 @@
   --blue-info: #4a9edd;
   --mono: 'Space Mono', monospace;
   --serif: 'Cinzel', serif;
+  /* Mobile card scale */
   --card-w: 68px;
   --card-h: 96px;
   --card-sm-w: 44px;
@@ -34,6 +35,7 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 html, body { height: 100%; }
 
 body {
@@ -46,6 +48,7 @@ body {
   background-image:
     radial-gradient(ellipse at 20% 50%, rgba(30,80,50,0.3) 0%, transparent 60%),
     radial-gradient(ellipse at 80% 20%, rgba(20,60,40,0.2) 0%, transparent 50%);
+  /* Prevent rubber-band scroll revealing dark edge on iOS */
   overscroll-behavior: none;
 }
 
@@ -93,7 +96,7 @@ body {
 .input-row input {
   background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.1);
   border-radius: 10px; padding: 13px 18px; color: var(--ivory);
-  font-family: var(--mono); font-size: 16px;
+  font-family: var(--mono); font-size: 16px; /* 16px prevents iOS zoom */
   outline: none; transition: border-color 0.2s, box-shadow 0.2s;
   -webkit-appearance: none;
 }
@@ -152,34 +155,24 @@ body {
 .status-text { font-size: 11px; letter-spacing: 0.08em; color: var(--ivory-faint); text-align: center; }
 .error-msg { font-size: 12px; color: var(--red-bad); text-align: center; min-height: 16px; }
 
-/* ── GAME SHELL ───────────────────────── */
-#game {
-  display: none;
-  flex-direction: column;
-  height: 100vh;
-  height: -webkit-fill-available;
-  overflow: hidden;
-}
+/* ── GAME ─────────────────────────────── */
+#game { display: none; flex-direction: column; height: 100vh; height: -webkit-fill-available; }
 
 .game-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 16px; background: rgba(0,0,0,0.55);
+  padding: 10px 14px; background: rgba(0,0,0,0.5);
   border-bottom: 1px solid rgba(212,168,50,0.12); flex-shrink: 0;
   gap: 8px; min-height: 52px;
   padding-top: max(10px, env(safe-area-inset-top));
-  z-index: 10;
 }
 
-.game-logo {
-  font-family: var(--serif); font-size: 18px; color: var(--gold);
-  letter-spacing: 0.15em; flex-shrink: 0;
-}
+.game-logo { font-family: var(--serif); font-size: 18px; color: var(--gold); letter-spacing: 0.15em; flex-shrink: 0; }
 
 .turn-indicator {
   font-family: var(--serif); font-size: 11px; letter-spacing: 0.1em;
   padding: 6px 14px; border-radius: 30px; background: rgba(0,0,0,0.3);
   border: 1px solid rgba(255,255,255,0.1); transition: all 0.3s;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px;
 }
 .turn-indicator.my-turn {
   background: var(--gold); color: var(--felt-dark); border-color: var(--gold);
@@ -207,6 +200,7 @@ body {
   50% { box-shadow: 0 0 0 8px rgba(74,158,221,0); }
 }
 
+/* Header right cluster */
 .header-right {
   display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
@@ -214,10 +208,11 @@ body {
   display: flex; align-items: center; gap: 5px; font-size: 9px;
   letter-spacing: 0.08em; text-transform: uppercase; color: var(--ivory-faint);
 }
-.conn-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-good); flex-shrink: 0; }
+.conn-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-good); flex-shrink:0; }
 .conn-dot.connecting { background: var(--gold); animation: pulse 1s infinite; }
 .conn-dot.disconnected { background: var(--red-bad); }
 
+/* In-game rules button */
 .btn-rules-ingame {
   background: transparent; border: 1px solid rgba(212,168,50,0.3);
   color: var(--gold); border-radius: 8px; padding: 5px 10px;
@@ -228,131 +223,23 @@ body {
 }
 .btn-rules-ingame:hover { background: rgba(212,168,50,0.1); border-color: var(--gold); }
 
-/* ── GAME BODY — MOBILE (default) ──────── */
 .game-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 10px 12px 8px;
-  gap: 0;
-  overflow-y: auto;
+  flex: 1; display: flex; flex-direction: column;
+  padding: 10px 12px 8px; gap: 0; overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
 }
 
-/* ── GAME BODY — DESKTOP ───────────────── */
-@media (min-width: 768px) {
-  #game { overflow: hidden; }
-
-  .game-body {
-    overflow: hidden;
-    padding: 0;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    grid-template-columns: 1fr;
-    height: 100%;
-  }
-
-  #disconnect-banner {
-    grid-column: 1;
-    margin: 8px 16px 0;
-  }
-
-  /* Opponents arc across the top */
-  .opponents-zone {
-    align-self: start;
-    padding: 16px 24px 12px;
-    border-bottom: none;
-    margin-bottom: 0;
-    gap: 12px;
-  }
-
-  /* Felt table: center piles + opponents together */
-  .table-center {
-    align-self: center;
-    gap: 32px;
-    padding: 0;
-  }
-
-  /* My area pinned to bottom */
-  .my-area {
-    align-self: end;
-    border-top: 1px solid rgba(255,255,255,0.07);
-    border-radius: 20px 20px 0 0;
-    padding: 14px 24px 16px;
-    background: rgba(0,0,0,0.25);
-    max-width: 100%;
-    width: 100%;
-  }
-
-  /* Spread hand cards with overlap on desktop */
-  .hand-cards {
-    justify-content: center;
-    flex-wrap: nowrap;
-    gap: 0;
-  }
-
-  .hand-cards .card {
-    margin-left: -18px;
-    transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s, margin-left 0.15s, z-index 0s;
-    position: relative;
-    z-index: 1;
-  }
-  .hand-cards .card:first-child { margin-left: 0; }
-
-  .hand-cards .card.selectable:hover,
-  .hand-cards .card.selected {
-    margin-left: -4px;
-    z-index: 10;
-  }
-  /* Give breathing room to card after a hovered/selected card */
-  .hand-cards .card.selectable:hover + .card,
-  .hand-cards .card.selected + .card {
-    margin-left: -4px;
-  }
-
-  /* Wider palace rows on desktop */
-  .palace-row { gap: 14px; }
-
-  /* Action bar tidier on desktop */
-  .action-bar {
-    padding: 10px 0 0;
-    gap: 14px;
-  }
-  .btn-play { max-width: 300px; }
-  .btn-pickup { max-width: 220px; }
-
-  /* Opponents slightly larger on desktop */
-  .opponent-area {
-    min-width: 110px;
-    max-width: 180px;
-    padding: 10px 14px;
-  }
-
-  /* Turn indicator more room on desktop */
-  .turn-indicator { max-width: 280px; font-size: 12px; }
-}
-
-/* ── TABLE CENTER (shared) ─────────────── */
-.table-center {
-  display: flex; align-items: flex-start; justify-content: center;
-  gap: 20px; padding: 12px 0 16px; flex-wrap: wrap;
-}
-.pile-area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-.pile-label {
-  font-family: var(--serif); font-size: 9px; letter-spacing: 0.2em;
-  text-transform: uppercase; color: var(--ivory-faint);
-}
-.pile-count { font-size: 9px; color: var(--ivory-faint); letter-spacing: 0.05em; }
-
-/* ── OPPONENTS (shared) ────────────────── */
+/* Opponents */
 .opponents-zone {
   display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;
   padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 12px;
 }
 .opponent-area {
   display: flex; flex-direction: column; align-items: center; gap: 6px;
-  min-width: 90px; max-width: 160px; padding: 8px 10px; border-radius: 12px;
+  min-width: 90px;
+  /*max-width: 300px;*/
+  padding: 8px 10px; border-radius: 12px;
   background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);
   transition: border-color 0.3s, background 0.3s;
 }
@@ -361,7 +248,7 @@ body {
 .opponent-name {
   font-family: var(--serif); font-size: 10px; letter-spacing: 0.1em;
   text-transform: uppercase; color: var(--ivory-dim);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;
 }
 .opponent-name.active-player { color: var(--gold); }
 .turn-arrow { color: var(--gold); font-size: 9px; animation: blink 1s ease infinite; }
@@ -374,7 +261,19 @@ body {
 }
 .hand-count-badge.empty { color: var(--green-good); border-color: rgba(62,200,120,0.25); }
 
-/* ── MY AREA (shared) ──────────────────── */
+/* Table center */
+.table-center {
+  display: flex; align-items: flex-start; justify-content: center;
+  gap: 20px; padding: 12px 0 16px; flex-wrap: wrap;
+}
+.pile-area { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.pile-label {
+  font-family: var(--serif); font-size: 9px; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--ivory-faint);
+}
+.pile-count { font-size: 9px; color: var(--ivory-faint); letter-spacing: 0.05em; }
+
+/* My area */
 .my-area {
   border-top: 1px solid rgba(255,255,255,0.07);
   display: flex; flex-direction: column; align-items: center; gap: 10px;
@@ -389,7 +288,7 @@ body {
 .palace-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .palace-slot { position: relative; width: var(--card-w); height: var(--card-h); }
 
-/* ── CARDS ─────────────────────────────── */
+/* ── CARDS ────────────────────────────── */
 .card {
   width: var(--card-w); height: var(--card-h); border-radius: 9px; background: var(--ivory);
   border: 1.5px solid rgba(0,0,0,0.15); display: flex; align-items: center;
@@ -421,7 +320,7 @@ body {
 .card.selectable { cursor: pointer; touch-action: manipulation; }
 .card.selectable:hover { transform: translateY(-10px); box-shadow: 0 12px 28px rgba(0,0,0,0.55); border-color: rgba(212,168,50,0.6); }
 .card.selected { transform: translateY(-14px); box-shadow: 0 14px 32px rgba(212,168,50,0.4); border-color: var(--gold); border-width: 2px; }
-
+/* On touch: no hover state, just the selected state matters */
 @media (hover: none) {
   .card.selectable:hover { transform: none; box-shadow: 0 3px 10px rgba(0,0,0,0.5); border-color: rgba(0,0,0,0.15); }
   .card.selectable:hover.face-down { border-color: rgba(255,255,255,0.1); }
@@ -518,13 +417,6 @@ body {
   transform: translateX(-50%); white-space: nowrap;
 }
 
-/* Disconnect banner */
-#disconnect-banner {
-  background: rgba(232,64,64,0.15); border: 1px solid rgba(232,64,64,0.3);
-  border-radius: 8px; padding: 8px 14px; font-size: 11px; letter-spacing: 0.06em;
-  color: var(--red-bad); text-align: center; margin-bottom: 4px;
-}
-
 /* Toast */
 #toast-container {
   position: fixed; top: 62px; left: 50%; transform: translateX(-50%);
@@ -586,36 +478,9 @@ body {
 
 .confetti-strip { font-size: 22px; letter-spacing: 0.1em; margin: -4px 0; }
 
-/* ── DESKTOP FELT TABLE ─────────────────
-   .felt-middle wraps opponents-zone +
-   table-center so they share a grid row
-   and the felt ellipse sits behind them.   */
-.felt-middle {
-  display: contents; /* transparent on mobile — children flow normally */
-}
-
-@media (min-width: 768px) {
-  .game-body {
-    background-image:
-      radial-gradient(ellipse 70% 55% at 50% 48%,
-        rgba(28,61,44,0.55) 0%,
-        rgba(14,33,24,0.0) 100%);
-  }
-
-  .felt-middle {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    overflow: hidden;
-    min-height: 0;
-  }
-
-  /* opponents-zone inside felt-middle: no bottom border, tighter */
-  .felt-middle .opponents-zone {
-    border-bottom: none;
-    margin-bottom: 0;
-    padding-bottom: 8px;
-  }
+/* Disconnection banner */
+.disconnect-banner {
+  background: rgba(232,64,64,0.15); border: 1px solid rgba(232,64,64,0.3);
+  border-radius: 8px; padding: 8px 14px; font-size: 11px; letter-spacing: 0.06em;
+  color: var(--red-bad); text-align: center; margin-bottom: 4px;
 }
