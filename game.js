@@ -90,21 +90,31 @@ function activePlayerCount() {
 }
 
 // Seat an opponent around the top arc of the oval table.
-// seat: 0-based index left→right; n: total opponents. Returns {left, top} in %.
-// Opponents span the upper arc (avoiding the bottom, which is reserved for you).
-function seatPosition(seat, n) {
-  const PHI_MIN = Math.PI * 0.20;   // left edge (~36° from horizontal)
-  const PHI_MAX = Math.PI * 0.80;   // right edge (~144° from horizontal)
-  const RX = 40;                    // horizontal radius (% of table width)
-  const RY = 26;                    // vertical radius
-  const CY = 32;                    // arc centre Y — higher up so piles have room below
+// Returns CSS values for left/top that guarantee the card stays fully inside
+// the felt-table, accounting for the card's own dimensions via a min-top clamp.
+function seatPosition(seat, n, tableW, tableH, cardW, cardH) {
+  const PHI_MIN = Math.PI * 0.18;
+  const PHI_MAX = Math.PI * 0.82;
+  const RX = 0.40 * tableW;   // horizontal radius in px
+  const RY = 0.28 * tableH;   // vertical radius in px
+  const CX = tableW / 2;
+  const CY = 0.42 * tableH;   // arc centre Y in px from felt-table top
+
   const phi = n === 1
     ? Math.PI / 2
     : PHI_MIN + (PHI_MAX - PHI_MIN) * (seat / (n - 1));
-  return {
-    left: 50 - RX * Math.cos(phi),
-    top:  CY - RY * Math.sin(phi),
-  };
+
+  // Centre of the opponent card in px from felt-table top-left
+  let cx = CX - RX * Math.cos(phi);
+  let cy = CY - RY * Math.sin(phi);
+
+  // Clamp so the card never bleeds outside the felt-table
+  const MARGIN = 8; // px buffer from felt edges
+  const halfW = cardW / 2, halfH = cardH / 2;
+  cx = Math.max(halfW + MARGIN, Math.min(tableW - halfW - MARGIN, cx));
+  cy = Math.max(halfH + MARGIN, Math.min(tableH - halfH - MARGIN, cy));
+
+  return { left: cx, top: cy }; // px from felt-table top-left (card is centred here)
 }
 
 // ═══════════════════════════════════════════════
@@ -710,6 +720,7 @@ function renderGame() {
   // ── Opponents ──
   const oppZone = document.getElementById('opponents-zone');
   oppZone.innerHTML = '';
+  oppZone._tableRect = null; // clear so it re-measures after resize
   const total = G.players.length;
   const nOpp = total - 1;
   const circular = window.innerWidth >= 768 && nOpp > 0;
@@ -769,10 +780,24 @@ function renderGame() {
 
     // On desktop, seat opponents around the top arc of the oval table.
     if (circular) {
-      const { left, top } = seatPosition(seat, nOpp);
+      // Measure the felt-table and a representative opponent card size.
+      // We do this once and reuse for all seats this render pass.
+      if (!oppZone._tableRect) {
+        const ft = document.querySelector('.felt-table');
+        oppZone._tableRect = ft ? ft.getBoundingClientRect() : { width: 1440, height: 640 };
+      }
+      const tr = oppZone._tableRect;
+      // Estimate opponent card dimensions from CSS variables
+      const smW = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-sm-w')) || 44;
+      const smH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-sm-h')) || 62;
+      // Opponent area is ~3 cards wide + gap, 2 rows + name + badge
+      const areaW = smW * 3 + 8 * 2 + 24;  // 3 cards + gaps + padding
+      const areaH = smH * 2 + 8 + 16 + 24 + 20; // 2 rows + gaps + name + badge + padding
+
+      const { left, top } = seatPosition(seat, nOpp, tr.width, tr.height, areaW, areaH);
       div.style.position = 'absolute';
-      div.style.left = left + '%';
-      div.style.top = top + '%';
+      div.style.left = left + 'px';
+      div.style.top  = top  + 'px';
       div.style.transform = 'translate(-50%, -50%)';
     }
     seat++;
