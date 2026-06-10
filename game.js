@@ -96,8 +96,8 @@ function seatPosition(seat, n) {
   const PHI_MIN = Math.PI * 0.20;   // left edge (~36° from horizontal)
   const PHI_MAX = Math.PI * 0.80;   // right edge (~144° from horizontal)
   const RX = 40;                    // horizontal radius (% of table width)
-  const RY = 28;                    // vertical radius — kept small so top stays in-table
-  const CY = 38;                    // arc centre Y (% from table top)
+  const RY = 26;                    // vertical radius
+  const CY = 32;                    // arc centre Y — higher up so piles have room below
   const phi = n === 1
     ? Math.PI / 2
     : PHI_MIN + (PHI_MAX - PHI_MIN) * (seat / (n - 1));
@@ -138,7 +138,19 @@ function initPeer(id) {
 // ═══════════════════════════════════════════════
 // LOBBY ACTIONS
 // ═══════════════════════════════════════════════
-document.getElementById('btn-host').onclick = async () => {
+function debounceBtn(id, asyncFn) {
+  const btn = document.getElementById(id);
+  btn.addEventListener('click', async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await asyncFn(); } finally {
+      // Re-enable only if we're still on the lobby (not mid-join)
+      setTimeout(() => { if (!G && !isHost) btn.disabled = false; }, 1500);
+    }
+  });
+}
+
+debounceBtn('btn-host', async () => {
   myName = document.getElementById('player-name').value.trim();
   if (!myName) { showLobbyError('Enter your name'); return; }
   clearLobbyError();
@@ -160,9 +172,9 @@ document.getElementById('btn-host').onclick = async () => {
     });
   });
   showWaitingRoom();
-};
+});
 
-document.getElementById('btn-join').onclick = async () => {
+debounceBtn('btn-join', async () => {
   myName = document.getElementById('player-name').value.trim();
   const code = document.getElementById('room-code-input').value.trim().toUpperCase();
   if (!myName) { showLobbyError('Enter your name'); return; }
@@ -192,7 +204,7 @@ document.getElementById('btn-join').onclick = async () => {
       showLobbyError('Room not found or timed out.');
     }
   }, 8000);
-};
+});
 
 // ═══════════════════════════════════════════════
 // DISCONNECT HANDLING (HOST ONLY)
@@ -432,33 +444,19 @@ function anyThreeInHands() {
 // Only HANDS are considered: at the start of play every active player has
 // a full hand, so the opening card is always played from hand.
 function findOpeningPlayer() {
-  // 1. Holder of the 3♠
-  for (const player of G.players) {
-    if (player.disconnected) continue;
+  const active = G.players.filter(p => !p.disconnected);
+  // 1. Holder of the 3♠ in hand
+  for (const player of active) {
     if (player.hand.some(c => c.rank === '3' && c.suit === '♠')) return player.index;
   }
-  // 2. Holder of any 3, by suit order ♠♥♦♣
+  // 2. Holder of any 3 in hand, by suit order ♠♥♦♣
   for (const suit of ['♠','♥','♦','♣']) {
-    for (const player of G.players) {
-      if (player.disconnected) continue;
+    for (const player of active) {
       if (player.hand.some(c => c.rank === '3' && c.suit === suit)) return player.index;
     }
   }
-  // 3. No 3 anywhere — holder of the lowest card overall (rank, then suit)
-  let bestIdx = -1, bestVal = Infinity, bestSuit = 99;
-  for (const player of G.players) {
-    if (player.disconnected) continue;
-    for (const c of player.hand) {
-      const v = cardValue(c.rank);
-      const s = SUIT_ORDER[c.suit];
-      if (v < bestVal || (v === bestVal && s < bestSuit)) {
-        bestVal = v; bestSuit = s; bestIdx = player.index;
-      }
-    }
-  }
-  if (bestIdx >= 0) return bestIdx;
-  // Absolute fallback (no active player has any hand card — shouldn't happen)
-  return G.players.findIndex(p => !p.disconnected);
+  // 3. No 3 in any hand — pick a random active player (avoids softlock entirely)
+  return active[Math.floor(Math.random() * active.length)].index;
 }
 
 function startPlayPhase() {

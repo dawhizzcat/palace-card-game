@@ -337,10 +337,10 @@ body {
     z-index: 2;
   }
 
-  /* Piles centred on the felt */
+  /* Piles centred on the felt — slightly below centre to balance against opponents above */
   .felt-table .table-center {
     position: absolute;
-    top: 50%; left: 50%;
+    top: 52%; left: 50%;
     transform: translate(-50%, -50%);
     gap: 18px;
     padding: 0;
@@ -416,6 +416,37 @@ body {
   .btn-pickup { max-width: 220px; }
 
   .turn-indicator { max-width: 280px; font-size: 12px; }
+}
+
+/* ── Compact layout for laptop-height screens ────────────────────────────
+   When the viewport is shorter than ~840px (e.g. 1280×800 laptops), shrink
+   card sizes and tighten padding so the felt table gets more space.        */
+@media (min-width: 768px) and (max-height: 840px) {
+  :root {
+    --card-w: 58px;
+    --card-h: 82px;
+    --card-sm-w: 38px;
+    --card-sm-h: 54px;
+  }
+
+  .my-area {
+    padding: 6px 20px 8px;
+    gap: 4px;
+    margin-top: -16px;
+  }
+
+  .my-cards-row { gap: 20px; }
+  .palace-row { gap: 8px; }
+
+  .action-bar { padding: 4px 0 0; gap: 10px; }
+  .btn-play, .btn-pickup { min-height: 40px; font-size: 11px; padding: 10px 16px; }
+
+  .hand-cards .card { margin-left: -14px; }
+  .hand-cards .card:first-child { margin-left: 0; }
+
+  /* Slightly tighter opponent areas */
+  .opponent-area { min-width: 90px; max-width: 148px; padding: 6px 8px; }
+  .card-sm { font-size: 9px; }
 }
 
 /* ── TABLE CENTER (shared) ─────────────── */
