@@ -322,8 +322,15 @@ body {
   .felt-ellipse {
     display: block;
     position: absolute;
-    /* Cover the full felt-table area */
-    top: 0; left: 4%; right: 4%; bottom: 0;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    /* For an absolute element, set width and let aspect-ratio determine height.
+       We use a JS-set width via --ellipse-w, falling back to 90%.
+       This gives a 16:10 oval (rounder than the old 2:1 flat shape). */
+    width: 90%;
+    aspect-ratio: 16 / 10;
+    /* If the computed height would exceed the table, clamp it.
+       JS sets the width to ensure the oval fits vertically too. */
     border-radius: 50%;
     background:
       radial-gradient(ellipse 65% 80% at 50% 40%, var(--felt-light) 0%, var(--felt) 50%, var(--felt-dark) 100%);
@@ -499,17 +506,33 @@ body {
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 .opponent-cards { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 
-/* 2-row palace display for opponents: face-down on top, face-up below */
+/* Opponent palace: stacked slots matching the player's own palace style */
 .opponent-palace {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: center;
-}
-.opponent-palace-row {
-  display: flex;
+  flex-direction: row;
   gap: 4px;
   justify-content: center;
+}
+.opponent-palace-slot {
+  position: relative;
+  width: var(--card-sm-w);
+  height: var(--card-sm-h);
+  flex-shrink: 0;
+}
+.opponent-palace-slot .card-sm {
+  position: absolute;
+  top: 0; left: 0;
+}
+/* Face-up card sits on top of the face-down back, offset slightly */
+.opponent-palace-faceup {
+  position: absolute;
+  top: 4px; left: 4px;
+  z-index: 2;
+  box-shadow: -2px -2px 6px rgba(0,0,0,0.4);
+}
+.card-sm-placeholder {
+  width: var(--card-sm-w);
+  height: var(--card-sm-h);
 }
 .hand-count-badge {
   font-size: 9px; letter-spacing: 0.06em; color: var(--ivory-faint);

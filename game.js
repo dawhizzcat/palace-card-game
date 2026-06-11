@@ -880,25 +880,27 @@ function renderGame() {
 
     const cardsDiv = document.createElement('div');
     cardsDiv.className = 'opponent-palace';
-    // Row 1: face-down cards (backs)
-    const fdRow = document.createElement('div');
-    fdRow.className = 'opponent-palace-row';
-    const maxSlots = Math.max(p.faceDown.length, p.faceUp.length, 1);
+    const maxSlots = Math.max(p.faceDown.length, p.faceUp.length, 0);
     for (let s = 0; s < maxSlots; s++) {
-      fdRow.appendChild(s < p.faceDown.length
-        ? makeSmallCardEl({ faceDown: true })
-        : document.createElement('div')); // empty placeholder keeps grid aligned
+      const slot = document.createElement('div');
+      slot.className = 'opponent-palace-slot';
+      // Face-down back always shown (even after it's flipped, show empty-ish)
+      if (s < p.faceDown.length) {
+        slot.appendChild(makeSmallCardEl({ faceDown: true }));
+      } else {
+        // placeholder so face-up card still occupies same position
+        const ph = document.createElement('div');
+        ph.className = 'card-sm-placeholder';
+        slot.appendChild(ph);
+      }
+      // Face-up card overlaid on top, offset slightly like real palace
+      if (s < p.faceUp.length) {
+        const fu = makeSmallCardEl(p.faceUp[s]);
+        fu.classList.add('opponent-palace-faceup');
+        slot.appendChild(fu);
+      }
+      cardsDiv.appendChild(slot);
     }
-    // Row 2: face-up cards
-    const fuRow = document.createElement('div');
-    fuRow.className = 'opponent-palace-row';
-    for (let s = 0; s < maxSlots; s++) {
-      fuRow.appendChild(s < p.faceUp.length
-        ? makeSmallCardEl(p.faceUp[s])
-        : document.createElement('div'));
-    }
-    cardsDiv.appendChild(fdRow);
-    cardsDiv.appendChild(fuRow);
     div.appendChild(cardsDiv);
 
     if (p.hand.length > 0) {
@@ -925,11 +927,24 @@ function renderGame() {
         const cardH = parseFloat(cs.getPropertyValue('--card-h')) || 96;
         const areaW = smW * 3 + 8 * 2 + 24;
         const areaH = smH * 2 + 8 + 16 + 24 + 20;
-        const pileH = cardH + 32; // card + label
+        const pileH = cardH + 32;
         oppZone._layout = layoutFelt(nOpp, tr.width, tr.height, areaW, areaH, pileH);
-        // Apply piles position now (table-center is already in DOM)
+        // Position piles
         const tc = document.querySelector('.felt-table .table-center');
         if (tc) tc.style.top = oppZone._layout.pilesTop + 'px';
+        // Size the ellipse to fill the table with a 16:10 ratio,
+        // clamped so it always fits both width and height.
+        const el = document.querySelector('.felt-ellipse');
+        if (el) {
+          const RATIO = 16 / 10;
+          const maxW = tr.width * 0.90;
+          const maxH = tr.height * 0.96;
+          // Pick the width that satisfies both constraints:
+          // w ≤ maxW and w/RATIO ≤ maxH → w ≤ maxH*RATIO
+          const w = Math.min(maxW, maxH * RATIO);
+          el.style.width = Math.round(w) + 'px';
+          // height is governed by aspect-ratio CSS
+        }
       }
       const pos = oppZone._layout.seats[seat];
       div.style.position = 'absolute';
