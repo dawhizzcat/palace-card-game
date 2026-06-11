@@ -20,11 +20,13 @@ function shuffle(arr) {
   return arr;
 }
 
-function makeDeck() {
+function makeDeck(double = false) {
   const deck = [];
-  for (const suit of SUITS)
-    for (const rank of RANKS)
-      deck.push({ rank, suit });
+  const copies = double ? 2 : 1;
+  for (let d = 0; d < copies; d++)
+    for (const suit of SUITS)
+      for (const rank of RANKS)
+        deck.push({ rank, suit });
   return shuffle(deck);
 }
 
@@ -81,6 +83,72 @@ function generateRoomCode() {
   const w = words[Math.floor(Math.random() * words.length)];
   const n = Math.floor(Math.random() * 90) + 10;
   return `${w}-${n}`;
+}
+
+const TURN_TIMEOUT_MS = 60_000; // 60 seconds
+let _turnTimerInterval = null;  // host-side ticker
+
+// ── Host: start/clear the turn countdown ──────────────────────────────────
+function startTurnTimer() {
+  clearTurnTimer();
+  if (!isHost || G.phase !== 'play') return;
+  G.turnDeadline = Date.now() + TURN_TIMEOUT_MS;
+  broadcastState();
+  _turnTimerInterval = setInterval(() => {
+    if (!G || G.phase !== 'play') { clearTurnTimer(); return; }
+    const remaining = G.turnDeadline - Date.now();
+    if (remaining <= 0) {
+      clearTurnTimer();
+      // Auto-skip: pick up the pile (if any) and advance, same as the player
+      // picking up. If pile is empty just advance the turn.
+      const cur = G.players[G.currentPlayer];
+      if (cur && !cur.disconnected) {
+        broadcastToast(`⏱ ${cur.name}'s time is up — turn skipped!`, 'bad');
+        if (G.playPile.length > 0) {
+          cur.hand = cur.hand.concat(G.playPile);
+          G.playPile = [];
+          G.mustPlayOnTwo = false;
+        }
+      }
+      G.mustPlayThree = false;
+      G.mustPlayOnTwo = false;
+      advanceTurn(G.currentPlayer);
+      startTurnTimer();
+      broadcastState();
+    }
+  }, 500);
+}
+
+function clearTurnTimer() {
+  if (_turnTimerInterval) { clearInterval(_turnTimerInterval); _turnTimerInterval = null; }
+}
+
+// Client-side countdown renderer (updates the turn indicator text live)
+let _clientCountdownInterval = null;
+function startClientCountdown() {
+  if (_clientCountdownInterval) { clearInterval(_clientCountdownInterval); _clientCountdownInterval = null; }
+  if (!G || G.phase !== 'play' || !G.turnDeadline) return;
+  _clientCountdownInterval = setInterval(() => {
+    if (!G || G.phase !== 'play') { clearInterval(_clientCountdownInterval); return; }
+    updateTurnIndicatorTimer();
+    renderSkipButton();
+  }, 500);
+}
+
+function updateTurnIndicatorTimer() {
+  if (!G || G.phase !== 'play' || !G.turnDeadline) return;
+  const remaining = Math.max(0, Math.ceil((G.turnDeadline - Date.now()) / 1000));
+  const el = document.getElementById('turn-timer');
+  if (el) el.textContent = remaining > 0 ? ` (${remaining}s)` : ' (0s)';
+}
+
+function renderSkipButton() {
+  if (!isHost || !G || G.phase !== 'play') return;
+  const remaining = G.turnDeadline ? G.turnDeadline - Date.now() : Infinity;
+  const cur = G.players[G.currentPlayer];
+  const shouldShow = cur && (cur.disconnected || remaining <= 0);
+  const skipBtn = document.getElementById('btn-skip-turn');
+  if (skipBtn) skipBtn.style.display = shouldShow ? '' : 'none';
 }
 
 // Count active (non-disconnected) players
@@ -419,7 +487,9 @@ function broadcastToast(msg, style) {
 // GAME INIT (HOST ONLY)
 // ═══════════════════════════════════════════════
 function startGame() {
-  const deck = makeDeck();
+  const useDouble = waitingPlayers.length >= 5;
+  const deck = makeDeck(useDouble);
+  if (useDouble) broadcastToast('5+ players — using 2 decks!', 'good');
   const players = waitingPlayers.map((p, i) => ({
     index: i,
     name: p.name,
@@ -484,10 +554,9 @@ function startPlayPhase() {
   G.phase = 'play';
   G.openingPlayer = findOpeningPlayer();
   G.currentPlayer = G.openingPlayer;
-  // Only force a 3 if a 3 actually exists in someone's hand. Otherwise the
-  // opener simply plays the lowest card (any card is legal on an empty pile).
   const hasThree = anyThreeInHands();
   G.mustPlayThree = hasThree;
+  G.turnDeadline = Date.now() + TURN_TIMEOUT_MS;
   const starter = G.players[G.openingPlayer];
   broadcastToast(
     hasThree
@@ -495,6 +564,7 @@ function startPlayPhase() {
       : `Game on! ${starter.name} opens with the lowest card.`,
     'good'
   );
+  if (isHost) startTurnTimer();
 }
 
 // ═══════════════════════════════════════════════
@@ -504,6 +574,27 @@ function processAction(fromPeerId, action) {
   const pi = G.players.findIndex(p => p.peerId === fromPeerId);
   if (pi < 0) return;
   const player = G.players[pi];
+
+  if (action.type === 'skip_turn') {
+    // Only the host can skip (and only if they are the host peerId)
+    if (!isHost || G.phase !== 'play') return;
+    const cur = G.players[G.currentPlayer];
+    if (!cur) return;
+    const remaining = G.turnDeadline ? G.turnDeadline - Date.now() : 0;
+    // Allow skip if: player is disconnected OR timer has elapsed
+    if (!cur.disconnected && remaining > 0) return;
+    broadcastToast(`⏭ ${cur.name}'s turn skipped by host.`, 'bad');
+    if (G.playPile.length > 0 && !cur.disconnected) {
+      cur.hand = cur.hand.concat(G.playPile);
+      G.playPile = [];
+      G.mustPlayOnTwo = false;
+    }
+    G.mustPlayThree = false;
+    G.mustPlayOnTwo = false;
+    advanceTurn(G.currentPlayer);
+    broadcastState();
+    return;
+  }
 
   if (action.type === 'setup_done') {
     if (G.phase !== 'setup' || player.setupDone) return;
@@ -600,6 +691,7 @@ function afterPlay(pi, cards) {
     G.mustPlayOnTwo = false;
     refillHand(player);
     broadcastToast(`${player.name} played a 10 — NUKE! Pile cleared. Play again.`, 'special');
+    if (isHost) { G.turnDeadline = Date.now() + TURN_TIMEOUT_MS; startTurnTimer(); }
     if (!checkWin(pi)) broadcastState();
     return;
   }
@@ -610,6 +702,7 @@ function afterPlay(pi, cards) {
     G.mustPlayOnTwo = false;
     refillHand(player);
     broadcastToast(`Four of a kind! Pile cleared — ${player.name} goes again.`, 'special');
+    if (isHost) { G.turnDeadline = Date.now() + TURN_TIMEOUT_MS; startTurnTimer(); }
     if (!checkWin(pi)) broadcastState();
     return;
   }
@@ -618,6 +711,7 @@ function afterPlay(pi, cards) {
     refillHand(player);
     G.mustPlayOnTwo = true;
     broadcastToast(`${player.name} played a 2 — must play on top of it!`, 'special');
+    if (isHost) { G.turnDeadline = Date.now() + TURN_TIMEOUT_MS; startTurnTimer(); }
     if (!checkWin(pi)) broadcastState();
     return;
   }
@@ -644,6 +738,10 @@ function advanceTurn(pi) {
     tries++;
   }
   G.currentPlayer = next;
+  if (isHost) {
+    G.turnDeadline = Date.now() + TURN_TIMEOUT_MS;
+    startTurnTimer();
+  }
 }
 
 function checkWin(pi) {
@@ -653,6 +751,8 @@ function checkWin(pi) {
     G.winner = pi;
     G.mustPlayOnTwo = false;
     G.mustPlayThree = false;
+    G.turnDeadline = null;
+    clearTurnTimer();
     broadcastToast(`🏆 ${player.name} wins!`, 'special');
     broadcastState();
     return true;
@@ -675,6 +775,8 @@ function applyState(state) {
   if (myPlayerIndex < 0) {
     myPlayerIndex = G.players.findIndex(p => p.peerId === myPeerId);
   }
+  // Restart the client-side visual countdown whenever state arrives
+  startClientCountdown();
   showGame();
 }
 
@@ -714,18 +816,40 @@ function renderGame() {
     showWinnerModal(G.winner);
   } else {
     const cur = G.players[G.currentPlayer];
+    let baseText = '';
     if (isMyTurn && G.mustPlayOnTwo) {
-      turnEl.textContent = 'Play on your 2 ▶';
+      baseText = 'Play on your 2 ▶';
       turnEl.classList.add('my-turn-two');
     } else if (isMyTurn && G.mustPlayThree) {
-      turnEl.textContent = 'Play your 3 ▶';
+      baseText = 'Play your 3 ▶';
       turnEl.classList.add('must-play-3');
     } else if (isMyTurn) {
-      turnEl.textContent = 'Your Turn ▶';
+      baseText = 'Your Turn ▶';
       turnEl.classList.add('my-turn');
     } else {
-      turnEl.textContent = `${cur.name}'s Turn`;
+      baseText = `${cur.name}'s Turn`;
     }
+    // Add timer span for non-my-turn players so they can see countdown
+    const timerSpan = document.createElement('span');
+    timerSpan.id = 'turn-timer';
+    timerSpan.style.opacity = '0.7';
+    timerSpan.style.fontSize = '0.85em';
+    turnEl.textContent = baseText;
+    if (G.turnDeadline && G.phase === 'play') {
+      const remaining = Math.max(0, Math.ceil((G.turnDeadline - Date.now()) / 1000));
+      timerSpan.textContent = ` (${remaining}s)`;
+      turnEl.appendChild(timerSpan);
+    }
+  }
+
+  // ── Host skip-turn button ──
+  const skipBtn = document.getElementById('btn-skip-turn');
+  if (skipBtn && isHost && G.phase === 'play') {
+    const cur = G.players[G.currentPlayer];
+    const remaining = G.turnDeadline ? G.turnDeadline - Date.now() : Infinity;
+    skipBtn.style.display = (cur && (cur.disconnected || remaining <= 0)) ? '' : 'none';
+  } else if (skipBtn) {
+    skipBtn.style.display = 'none';
   }
 
   // ── Opponents ──
@@ -1158,6 +1282,9 @@ document.getElementById('btn-rules').onclick = () => {
 };
 document.getElementById('btn-rules-ingame').onclick = () => {
   document.getElementById('rules-modal').style.display = 'flex';
+};
+document.getElementById('btn-skip-turn').onclick = () => {
+  sendToHost({ type: 'skip_turn' });
 };
 // Close modal on overlay click
 document.getElementById('rules-modal').addEventListener('click', e => {
